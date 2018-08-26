@@ -1,0 +1,14 @@
+language: rust
+sudo: false
+dist: trusty
+matrix:
+    fast_finish: true
+    include:
+        - rust: nightly
+        - rust: stable
+
+cache:
+    apt: true
+    directories:
+        - target/debug/deps
+        - target/debug/build

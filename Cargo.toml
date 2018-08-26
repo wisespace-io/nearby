@@ -1,0 +1,16 @@
+[package]
+name = "nearby"
+version = "0.1.0"
+authors = ["Flavio Oliveira <flavio@wisespace.io>"]
+license = "MIT OR Apache-2.0"
+
+description = "Scans all nearby wifi networks and the devices connected to each network"
+keywords = ["wireless", "wifi", "hacking", "802.11"]
+documentation = "https://github.com/wisespace-io/nearby"
+repository = "https://github.com/wisespace-io/nearby"
+readme = "README.md"
+
+[dependencies]
+pcap = "0.7.0"
+radiotap = "1"
+error-chain = "0.12"
