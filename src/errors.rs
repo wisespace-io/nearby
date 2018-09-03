@@ -1,4 +1,4 @@
-use std;
+use std::io::Error as ioError;
 
 error_chain! {
     types {
@@ -10,6 +10,6 @@ error_chain! {
     }
 
     foreign_links {
-        IoError(std::io::Error);
+        IoError(ioError);
     }
 }

@@ -1,7 +1,7 @@
 [package]
 name = "nearby"
 version = "0.1.0"
-authors = ["Flavio Oliveira <flavio@wisespace.io>"]
+authors = ["Flavio <flavio@wisespace.io>"]
 license = "MIT OR Apache-2.0"
 
 description = "Scans all nearby wifi networks and the devices connected to each network"
@@ -13,4 +13,5 @@ readme = "README.md"
 [dependencies]
 pcap = "0.7.0"
 radiotap = "1"
+bytes = "0.4"
 error-chain = "0.12"

@@ -1,5 +1,4 @@
 use errors::*;
-use std::ffi::OsString;
 use std::io::prelude::*;
 use std::fs::{self, File};
 use std::process::Command;
@@ -34,12 +33,14 @@ impl NetworkInterface {
         })
     }
 
-    pub fn monitor_mode_on(&self) {
-        self.set_interface_mode("monitor");
+    pub fn monitor_mode_on(&self) -> Result<()> {
+        self.set_interface_mode("monitor")?;
+        Ok(())
     }
 
-    pub fn monitor_mode_off(&self) {
-        self.set_interface_mode("managed");
+    pub fn monitor_mode_off(&self) -> Result<()> {
+        self.set_interface_mode("managed")?;
+        Ok(())
     }
     
     fn set_interface_mode(&self, mode: &str) -> Result<()> {
@@ -61,7 +62,7 @@ impl NetworkInterface {
         let mode: Vec<&str> = str_mode.split('\n').collect();
         let mode_number: i32 = mode[0].parse::<i32>().unwrap();
 
-        Ok((mode_number == ADAPTER_MONITOR_MODE))
+        Ok(mode_number == ADAPTER_MONITOR_MODE)
     }
 
     pub fn find_monitor_interfaces(&self) -> Result<()> {

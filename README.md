@@ -5,4 +5,4 @@
 
 ## Description
 
-Scans all nearby wifi networks and the devices connected to each network.
+Scans all nearby wifi networks and the devices connected to each network. (WIP)
