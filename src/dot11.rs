@@ -1,7 +1,8 @@
 use util::*;
 use errors::*;
 use bytes::{Buf, IntoBuf, Bytes};
-use std::io::Cursor;
+use std::io::{Cursor, self};
+use info::*;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum FrameType {
@@ -30,27 +31,57 @@ pub enum FrameSubType {
 #[derive(Clone, Debug)]
 pub struct Dot11Header {
     pub frame_control: FrameControl,
-    pub duration: u16,
+    pub duration: [u8; 2],
     pub dst: String,
     pub src: String,
     pub bssid: String,
-    pub seq_ctl: u8
+    pub seq_ctl: [u8; 2]
 }
 
 impl Dot11Header {
     pub fn from_bytes(input: &[u8]) -> Result<Dot11Header> {
-        let mut cursor = Cursor::new(input);
+        use std::io::Read;
 
-        let frame_control = FrameControl::from_bytes(input)?;
+        let buf = Bytes::from(input).into_buf();
+        let mut reader = buf.reader();
 
-        cursor.advance(2);
-        let duration = cursor.get_u16_le();
+        let mut control = [0; 2];
+        reader.read(&mut control)?;
+        let frame_control = FrameControl::from_bytes(&control)?;
 
-        let addresses = FrameAddresses::from_bytes(&cursor.bytes()).unwrap();
+        let mut duration = [0; 2];
+        reader.read(&mut duration)?;
 
+        let mut mac_addresses = [0; 18];
+        reader.read(&mut mac_addresses)?;
+
+        let (dst, src, bssid) = Dot11Header::parse_address(frame_control, &mac_addresses);
+
+        let mut seq_ctl = [0; 2];
+        reader.read(&mut seq_ctl)?;
+
+        let mut dst2 = vec![];
+        io::copy(&mut reader, &mut dst2).unwrap();
+
+        let body = Dot11Header::parse_body(frame_control, &dst2[..]);        
+
+        let header = Dot11Header {
+            frame_control: frame_control,
+            duration: duration,
+            dst: dst,
+            src: src,
+            bssid: bssid,
+            seq_ctl: seq_ctl,
+        };
+        Ok(header)
+    }
+
+    fn parse_address(frame_control: FrameControl, input: &[u8]) -> (String, String, String) {
         let mut dst = String::from("");
         let mut src = String::from("");
         let mut bssid = String::from("");
+
+        let addresses = FrameAddresses::from_bytes(input).unwrap();
 
         if frame_control.to_ds && frame_control.from_ds {
             dst.push_str(&addresses.addr3.addr);
@@ -69,18 +100,19 @@ impl Dot11Header {
             bssid.push_str(&addresses.addr3.addr);            
         } 
 
-        let seq_ctl = cursor.get_u8();
-
-        let header = Dot11Header {
-            frame_control: frame_control,
-            duration: duration,
-            dst: dst,
-            src: src,
-            bssid: bssid,
-            seq_ctl: seq_ctl
-        };
-        Ok(header)
+        return (dst, src, bssid)
     }
+
+    fn parse_body(frame_control: FrameControl, input: &[u8]) -> String {
+        let dst = String::from("");
+
+        if frame_control.frame_type == FrameType::Management && frame_control.frame_subtype == FrameSubType::Beacon {
+            let info = Beacon::from_bytes(input);
+            println!("{:?}", info);
+        }
+
+        return dst     
+    }    
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -163,7 +195,6 @@ pub struct FrameAddresses {
 }
 
 impl FrameAddresses {
-
     pub fn from_bytes(s: &[u8]) -> Result<FrameAddresses> {
         use std::io::Read;
 

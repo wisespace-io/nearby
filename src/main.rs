@@ -1,10 +1,12 @@
 extern crate bytes;
 extern crate pcap;
+extern crate byteorder;
 extern crate radiotap;
 #[macro_use] 
 extern crate error_chain;
 
 mod util;
+mod info;
 mod errors;
 mod dot11;
 mod linux_device_management;
@@ -45,7 +47,7 @@ fn main() {
                             buf.advance(tap_data.header.length);
                         
                             let header = &Dot11Header::from_bytes(&buf.bytes()).unwrap();
-                            println!("{:?}", header);
+                            //println!("{:?}", header);
                     }
                     count += 1;
                     }
