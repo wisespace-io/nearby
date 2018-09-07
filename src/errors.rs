@@ -1,3 +1,4 @@
+use pcap::Error as pcapError;
 use std::io::Error as ioError;
 
 error_chain! {
@@ -5,11 +6,8 @@ error_chain! {
         Error, ErrorKind, ResultExt, Result;
     }
 
-    errors {         
-
-    }
-
     foreign_links {
         IoError(ioError);
-    }
+        PacpError(pcapError);
+    }   
 }

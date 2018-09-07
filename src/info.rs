@@ -1,4 +1,3 @@
-use errors::*;
 use bytes::{Buf, Bytes};
 use std::io::Cursor;
 
@@ -25,7 +24,7 @@ impl Info for Beacon {
         let cap_info = cursor.get_u16_le();;
 
         // Parse SSID
-        let element_id = cursor.get_u8();
+        let _element_id = cursor.get_u8();
         let ssid_len = cursor.get_u8();
         let mut buf = Bytes::from(cursor.bytes());
         let ssid =  buf.split_to(ssid_len as usize);

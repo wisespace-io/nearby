@@ -11,6 +11,7 @@ repository = "https://github.com/wisespace-io/nearby"
 readme = "README.md"
 
 [dependencies]
+clap = "2.32"
 pcap = "0.7.0"
 radiotap = "1"
 bytes = "0.4"

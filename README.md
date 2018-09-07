@@ -6,3 +6,16 @@
 ## Description
 
 Scans all nearby wifi networks and the devices connected to each network. (WIP)
+
+## Build && install
+
+```rust
+cargo build --release
+cargo install
+```
+
+## Usage
+
+```rust
+nearby -i wlp2s0
+```
