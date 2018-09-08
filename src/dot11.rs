@@ -35,7 +35,7 @@ pub struct Dot11Header {
     pub dst: String,
     pub src: String,
     pub bssid: String,
-    pub seq_ctl: [u8; 2]
+    pub seq_ctl: [u8; 2],
 }
 
 impl Dot11Header {
@@ -108,7 +108,13 @@ impl Dot11Header {
 
         if frame_control.frame_type == FrameType::Management && frame_control.frame_subtype == FrameSubType::Beacon {
             let info = Beacon::from_bytes(input);
-            println!("{:?}", info);
+            println!("BEACON: {:?}", info);
+        } else if frame_control.frame_type == FrameType::Management && frame_control.frame_subtype == FrameSubType::ProbeReq {
+            let info = ProbeRequest::from_bytes(input);
+            println!("Probe Request {:?}", info);
+        } else if frame_control.frame_type == FrameType::Management && frame_control.frame_subtype == FrameSubType::ProbeResp {
+            let info = ProbeResponse::from_bytes(input);
+            println!("Probe Response {:?}", info);
         }
 
         return dst     

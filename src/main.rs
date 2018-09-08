@@ -29,10 +29,6 @@ fn main() -> Result<()> {
                                     .multiple(true)
                                     .help("wireless interface")
                                     .required(true),
-                            Arg::with_name("quiet")
-                                    .help("Be less verbose")
-                                    .short("q")
-                                    .long("quiet"),
                             Arg::with_name("nolog")
                                     .help("Don't output log file")
                                     .long("nolog")
