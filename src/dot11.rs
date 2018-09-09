@@ -36,6 +36,7 @@ pub struct Dot11Header {
     pub src: String,
     pub bssid: String,
     pub seq_ctl: [u8; 2],
+    pub info: BodyInformation
 }
 
 impl Dot11Header {
@@ -63,7 +64,7 @@ impl Dot11Header {
         let mut dst2 = vec![];
         io::copy(&mut reader, &mut dst2).unwrap();
 
-        let _body = Dot11Header::parse_body(frame_control, &dst2[..]);        
+        let body_information = Dot11Header::parse_body(frame_control, &dst2[..]);        
 
         let header = Dot11Header {
             frame_control: frame_control,
@@ -72,6 +73,7 @@ impl Dot11Header {
             src: src,
             bssid: bssid,
             seq_ctl: seq_ctl,
+            info: body_information
         };
         Ok(header)
     }
@@ -98,26 +100,21 @@ impl Dot11Header {
             dst.push_str(&addresses.addr1.addr);
             src.push_str(&addresses.addr2.addr);
             bssid.push_str(&addresses.addr3.addr);            
-        } 
+        }
 
         return (dst, src, bssid)
     }
 
-    fn parse_body(frame_control: FrameControl, input: &[u8]) -> String {
-        let dst = String::from("");
-
+    fn parse_body(frame_control: FrameControl, input: &[u8]) -> BodyInformation {
         if frame_control.frame_type == FrameType::Management && frame_control.frame_subtype == FrameSubType::Beacon {
-            let info = Beacon::from_bytes(input);
-            println!("BEACON: {:?}", info);
+            return BodyInformation::Beacon(Beacon::from_bytes(input));
         } else if frame_control.frame_type == FrameType::Management && frame_control.frame_subtype == FrameSubType::ProbeReq {
-            let info = ProbeRequest::from_bytes(input);
-            println!("Probe Request {:?}", info);
+            return BodyInformation::ProbeRequest(ProbeRequest::from_bytes(input));
         } else if frame_control.frame_type == FrameType::Management && frame_control.frame_subtype == FrameSubType::ProbeResp {
-            let info = ProbeResponse::from_bytes(input);
-            println!("Probe Response {:?}", info);
+            return BodyInformation::ProbeResponse(ProbeResponse::from_bytes(input));
+        } else {
+            return BodyInformation::UnHandled(false);
         }
-
-        return dst     
     }    
 }
 

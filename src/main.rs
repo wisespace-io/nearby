@@ -62,8 +62,8 @@ fn main() -> Result<()> {
                                     let mut buf = Cursor::new(data);
                                     buf.advance(tap_data.header.length);
                                 
-                                    let _header = &Dot11Header::from_bytes(&buf.bytes())?;
-                                    //println!("{:?}", header);
+                                    let header = &Dot11Header::from_bytes(&buf.bytes())?;
+                                    println!("{:?}", header);
                                 }
                                 count += 1;
                             }

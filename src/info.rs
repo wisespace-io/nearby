@@ -1,6 +1,14 @@
 use bytes::{Buf, Bytes};
 use std::io::Cursor;
 
+#[derive(Clone, Debug)]
+pub enum BodyInformation {
+    Beacon(Beacon),
+    ProbeRequest(ProbeRequest),
+    ProbeResponse(ProbeResponse),
+    UnHandled(bool)
+}
+
 pub trait Info {
     fn from_bytes(input: &[u8]) -> Self
         where Self: Sized;

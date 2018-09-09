@@ -7,13 +7,20 @@
 
 ## Description
 
-Scans all nearby wifi networks and the devices connected to each network. (WIP)
+Scans all nearby wifi networks and the devices connected to each network.
 
-## Build && install
+## WORK IN PROGRESS
+
+### Planned features
+
+- [ ] Map all devices nearby (Netjson)
+- [ ] Count the number of people around you
+- [ ] GeoLocation (Distance from/to a device)
+
+## Build
 
 ```rust
 cargo build --release
-cargo install
 ```
 
 ## Usage
@@ -21,3 +28,10 @@ cargo install
 ```rust
 nearby -i wlp2s0
 ```
+
+## WiFi adapter should support monitor mode
+
+There are many USB WiFi adapters that support monitor mode, i.e:
+
+- Alfa AWUS036NHA
+- TP-Link TL-WN722N (ONLY Version 1)
