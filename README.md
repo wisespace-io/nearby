@@ -26,8 +26,10 @@ cargo build --release
 ## Usage
 
 ```rust
-nearby -i wlp2s0
+nearby -i your_wireless_device
 ```
+
+I.e: wlan0, or just run iwconfig to get it
 
 ## WiFi adapter should support monitor mode
 

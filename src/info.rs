@@ -6,6 +6,8 @@ pub enum BodyInformation {
     Beacon(Beacon),
     ProbeRequest(ProbeRequest),
     ProbeResponse(ProbeResponse),
+    AssociationRequest(AssociationRequest),
+    AssociationResponse(AssociationResponse),
     UnHandled(bool)
 }
 
@@ -20,7 +22,8 @@ pub struct Beacon {
     pub interval: u16,
     pub cap_info: u16,
     pub ssid: SSID,
-    pub supported_rates: Vec<f32>
+    pub supported_rates: Vec<f32>,
+    pub country: Country
 }
 
 impl Info for Beacon {
@@ -32,14 +35,41 @@ impl Info for Beacon {
         let cap_info = cursor.get_u16_le();;
 
         let ssid = SSID::from_bytes(cursor.bytes());
-        cursor.advance(ssid.ssid_len + 2);
+        cursor.advance(ssid.ssid_len + 2); // 2 accounts for Id + Len
+        let supported_rates = supported_rates(cursor.bytes());
+        cursor.advance(supported_rates.len() + 2); // 2 accounts for Id + Len
+
+        let mut country = Country { ..Default::default() };
+
+        loop {
+            let element_id = cursor.get_u8();
+            let len = cursor.get_u8() as usize;
+
+            // Skipping some fields as we just want the country info for now
+            match element_id {
+                0x02 => cursor.advance(len), // FH Parameter Set
+                0x03 => cursor.advance(len), // DS Parameter Set
+                0x04 => cursor.advance(len), // CF Parameter Set
+                0x05 => cursor.advance(len), // TIM
+                0x06 => cursor.advance(len), // IBSS
+                0x07 => {
+                    country = Country::from_bytes(cursor.bytes());
+                    break;
+                },
+                0x32...0x42 => cursor.advance(len), // Can appear before country             
+                _ => {
+                    break;
+                }
+            }
+        }
 
         Beacon {
            timestamp: timestamp,
            interval: interval,
            cap_info: cap_info,
            ssid: ssid,
-           supported_rates: supported_rates(cursor.bytes())
+           supported_rates: supported_rates,
+           country: country
         }
     }
 }
@@ -94,6 +124,57 @@ impl Info for ProbeResponse {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct AssociationRequest {
+    pub cap_info: u16,
+    pub interval: u16,
+    pub ssid: SSID,
+    pub supported_rates: Vec<f32>
+}
+
+impl Info for AssociationRequest {
+    fn from_bytes(input: &[u8]) -> AssociationRequest {
+        let mut cursor = Cursor::new(input);
+
+        let cap_info = cursor.get_u16_le();
+        let interval = cursor.get_u16_le();
+        let ssid = SSID::from_bytes(cursor.bytes());
+        cursor.advance(ssid.ssid_len + 2);
+
+        AssociationRequest {
+           cap_info: cap_info,
+           interval: interval,
+           ssid: ssid,
+           supported_rates: supported_rates(cursor.bytes())
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct AssociationResponse {
+    pub cap_info: u16,
+    pub status_code: u16,
+    pub association_id: u16,
+    pub supported_rates: Vec<f32>
+}
+
+impl Info for AssociationResponse {
+    fn from_bytes(input: &[u8]) -> AssociationResponse {
+        let mut cursor = Cursor::new(input);
+
+        let cap_info = cursor.get_u16_le();
+        let status_code = cursor.get_u16_le();
+        let association_id = cursor.get_u16_le();
+
+        AssociationResponse {
+           cap_info: cap_info,
+           status_code: status_code,
+           association_id: association_id,
+           supported_rates: supported_rates(cursor.bytes())
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct SSID {
     pub element_id: u8,
@@ -118,6 +199,23 @@ impl Info for SSID {
     }
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct Country {
+    pub country_code: String,
+}
+
+impl Info for Country {
+    fn from_bytes(input: &[u8]) -> Country {
+        let mut buf = Bytes::from(input);
+        let country_code =  buf.split_to(3); // Country code has 3 bytes
+
+        // We should include the supported channels
+        Country {
+            country_code: String::from_utf8(country_code.to_vec()).unwrap()
+        }
+    }
+}
+
 pub fn supported_rates(input: &[u8]) -> Vec<f32> {
     let mut rates: Vec<f32> = Vec::new();
     let mut cursor = Cursor::new(input);
@@ -125,7 +223,7 @@ pub fn supported_rates(input: &[u8]) -> Vec<f32> {
     let _element_id = cursor.get_u8();
     let number_of_rates = cursor.get_u8();
 
-    for _x in 0..number_of_rates {        
+    for _x in 0..number_of_rates {
         let rate = cursor.get_u8();
 
         match rate {

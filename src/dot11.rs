@@ -106,14 +106,23 @@ impl Dot11Header {
     }
 
     fn parse_body(frame_control: FrameControl, input: &[u8]) -> BodyInformation {
-        if frame_control.frame_type == FrameType::Management && frame_control.frame_subtype == FrameSubType::Beacon {
-            return BodyInformation::Beacon(Beacon::from_bytes(input));
-        } else if frame_control.frame_type == FrameType::Management && frame_control.frame_subtype == FrameSubType::ProbeReq {
-            return BodyInformation::ProbeRequest(ProbeRequest::from_bytes(input));
-        } else if frame_control.frame_type == FrameType::Management && frame_control.frame_subtype == FrameSubType::ProbeResp {
-            return BodyInformation::ProbeResponse(ProbeResponse::from_bytes(input));
-        } else {
-            return BodyInformation::UnHandled(false);
+        match frame_control.frame_type {
+           FrameType::Management => {
+               if frame_control.frame_subtype == FrameSubType::Beacon {
+                   return BodyInformation::Beacon(Beacon::from_bytes(input));
+               } else if frame_control.frame_subtype == FrameSubType::ProbeReq {
+                   return BodyInformation::ProbeRequest(ProbeRequest::from_bytes(input));
+               } else if frame_control.frame_subtype == FrameSubType::ProbeResp {
+                   return BodyInformation::ProbeResponse(ProbeResponse::from_bytes(input));
+               } else if frame_control.frame_subtype == FrameSubType::AssoReq {
+                   return BodyInformation::AssociationRequest(AssociationRequest::from_bytes(input));
+               } else if frame_control.frame_subtype == FrameSubType::AssoResp {
+                   return BodyInformation::AssociationResponse(AssociationResponse::from_bytes(input));
+               } else {
+                   return BodyInformation::UnHandled(true);
+               }
+           },
+           _ => return BodyInformation::UnHandled(true)
         }
     }    
 }
