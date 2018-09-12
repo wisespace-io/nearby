@@ -38,30 +38,7 @@ impl Info for Beacon {
         cursor.advance(ssid.ssid_len + 2); // 2 accounts for Id + Len
         let supported_rates = supported_rates(cursor.bytes());
         cursor.advance(supported_rates.len() + 2); // 2 accounts for Id + Len
-
-        let mut country = Country { ..Default::default() };
-
-        loop {
-            let element_id = cursor.get_u8();
-            let len = cursor.get_u8() as usize;
-
-            // Skipping some fields as we just want the country info for now
-            match element_id {
-                0x02 => cursor.advance(len), // FH Parameter Set
-                0x03 => cursor.advance(len), // DS Parameter Set
-                0x04 => cursor.advance(len), // CF Parameter Set
-                0x05 => cursor.advance(len), // TIM
-                0x06 => cursor.advance(len), // IBSS
-                0x07 => {
-                    country = Country::from_bytes(cursor.bytes());
-                    break;
-                },
-                0x32...0x42 => cursor.advance(len), // Can appear before country             
-                _ => {
-                    break;
-                }
-            }
-        }
+        let country = get_country(cursor.bytes());
 
         Beacon {
            timestamp: timestamp,
@@ -100,7 +77,8 @@ pub struct ProbeResponse {
     pub interval: u16,
     pub cap_info: u16,
     pub ssid: SSID,
-    pub supported_rates: Vec<f32>
+    pub supported_rates: Vec<f32>,
+    pub country: Country
 }
 
 impl Info for ProbeResponse {
@@ -112,14 +90,18 @@ impl Info for ProbeResponse {
         let cap_info = cursor.get_u16_le();
 
         let ssid = SSID::from_bytes(cursor.bytes());
-        cursor.advance(ssid.ssid_len + 2);
+        cursor.advance(ssid.ssid_len + 2); // 2 accounts for Id + Len
+        let supported_rates = supported_rates(cursor.bytes());
+        cursor.advance(supported_rates.len() + 2); // 2 accounts for Id + Len
+        let country = get_country(cursor.bytes());
 
         ProbeResponse {
            timestamp: timestamp,
            interval: interval,
            cap_info: cap_info,
            ssid: ssid,
-           supported_rates: supported_rates(cursor.bytes())
+           supported_rates: supported_rates,
+           country: country
         }
     }
 }
@@ -246,4 +228,33 @@ pub fn supported_rates(input: &[u8]) -> Vec<f32> {
     }
 
     rates
+}
+
+pub fn get_country(input: &[u8]) -> Country {
+    let mut cursor = Cursor::new(input);
+    let mut country = Country { ..Default::default() };
+
+    loop {
+        let element_id = cursor.get_u8();
+        let len = cursor.get_u8() as usize;
+
+        // Skipping some fields as we just want the country info for now
+        match element_id {
+            0x02 => cursor.advance(len), // FH Parameter Set
+            0x03 => cursor.advance(len), // DS Parameter Set
+            0x04 => cursor.advance(len), // CF Parameter Set
+            0x05 => cursor.advance(len), // TIM
+            0x06 => cursor.advance(len), // IBSS
+            0x07 => {
+                country = Country::from_bytes(cursor.bytes());
+                break;
+            },
+            0x32...0x42 => cursor.advance(len), // Can appear before country             
+            _ => {
+                break;
+            }
+        }
+    }
+
+    country
 }

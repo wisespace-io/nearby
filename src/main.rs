@@ -10,9 +10,11 @@ mod util;
 mod info;
 mod errors;
 mod dot11;
+mod vendors;
 mod linux_device_management;
 
 use errors::*;
+use vendors::*;
 use dot11::*;
 use bytes::{Buf};
 use std::io::Cursor;
@@ -40,6 +42,8 @@ fn main() -> Result<()> {
         if let Ok(_value) = wifi.monitor_mode_on() {
             wifi.find_monitor_interfaces()?;
 
+            let _vendors = VendorsDB::from_file("data/oui.txt")?;
+
             let mut cap = pcap::Capture::from_device(&device[..])?;
 
             let mut cap = match cap.timeout(1).rfmon(true).open() {
@@ -56,8 +60,8 @@ fn main() -> Result<()> {
                         Ok(packet) => {
                             let data: &[u8] = &packet;
                             let radiotap_header = radiotap::Radiotap::from_bytes(&packet);
-
                             if radiotap_header.is_ok() {
+                                println!("{:?}", radiotap_header);
                                 if let Ok(tap_data) = radiotap_header {
                                     let mut buf = Cursor::new(data);
                                     buf.advance(tap_data.header.length);
