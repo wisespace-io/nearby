@@ -11,11 +11,12 @@ mod info;
 mod errors;
 mod dot11;
 mod vendors;
+mod mapper;
 mod linux_device_management;
 
 use errors::*;
-use vendors::*;
 use dot11::*;
+use mapper::*;
 use bytes::{Buf};
 use std::io::Cursor;
 use clap::{Arg, App};
@@ -42,8 +43,6 @@ fn main() -> Result<()> {
         if let Ok(_value) = wifi.monitor_mode_on() {
             wifi.find_monitor_interfaces()?;
 
-            let _vendors = VendorsDB::from_file("data/oui.txt")?;
-
             let mut cap = pcap::Capture::from_device(&device[..])?;
 
             let mut cap = match cap.timeout(1).rfmon(true).open() {
@@ -53,21 +52,21 @@ fn main() -> Result<()> {
 
             // DLT_IEEE802_11_RADIO = 127
             if let Ok(_result) = cap.set_datalink(pcap::Linktype(127)) {
+                let mapper = Mapper::new()?;
                 let mut count = 0;
-                // Print out the first 1000 Radiotap headers
+
                 while count < 1000 {
                     match cap.next() {
                         Ok(packet) => {
                             let data: &[u8] = &packet;
                             let radiotap_header = radiotap::Radiotap::from_bytes(&packet);
                             if radiotap_header.is_ok() {
-                                println!("{:?}", radiotap_header);
                                 if let Ok(tap_data) = radiotap_header {
                                     let mut buf = Cursor::new(data);
                                     buf.advance(tap_data.header.length);
                                 
-                                    let header = &Dot11Header::from_bytes(&buf.bytes())?;
-                                    println!("{:?}", header);
+                                    let dot11_header = Dot11Header::from_bytes(&buf.bytes())?;
+                                    mapper.map(tap_data, dot11_header);
                                 }
                                 count += 1;
                             }

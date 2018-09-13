@@ -7,7 +7,7 @@
 
 ## Description
 
-Scans all nearby wifi networks and the devices connected to each network.
+Scans nearby wifi networks and the devices connected to each network.
 
 ## WORK IN PROGRESS
 
