@@ -5,7 +5,7 @@ authors = ["Flavio <flavio@wisespace.io>"]
 license = "MIT OR Apache-2.0"
 
 description = "Scans all nearby wifi networks and the devices connected to each network"
-keywords = ["wireless", "wifi", "hacking", "802.11"]
+keywords = ["wireless", "wifi", "dot11"]
 documentation = "https://github.com/wisespace-io/nearby"
 repository = "https://github.com/wisespace-io/nearby"
 readme = "README.md"
