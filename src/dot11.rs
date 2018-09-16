@@ -62,7 +62,7 @@ impl Dot11Header {
         reader.read(&mut seq_ctl)?;
 
         let mut dst2 = vec![];
-        io::copy(&mut reader, &mut dst2).unwrap();
+        io::copy(&mut reader, &mut dst2)?;
 
         let body_information = Dot11Header::parse_body(frame_control, &dst2[..]);        
 

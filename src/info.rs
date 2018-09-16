@@ -176,7 +176,7 @@ impl Info for SSID {
         SSID {
             element_id: element_id,
             ssid_len: ssid_len,
-            value: String::from_utf8(ssid.to_vec()).unwrap()
+            value: String::from_utf8(ssid.to_vec()).unwrap_or("".to_string())
         }
     }
 }
@@ -193,7 +193,7 @@ impl Info for Country {
 
         // We should include the supported channels
         Country {
-            country_code: String::from_utf8(country_code.to_vec()).unwrap()
+            country_code: String::from_utf8(country_code.to_vec()).unwrap_or("".to_string())
         }
     }
 }

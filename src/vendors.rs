@@ -20,7 +20,7 @@ impl VendorsDB {
             if v[0].contains("base 16") {
                 let (vendor_code, _discard) = v[0].split_at(6);
                 let vendor_name = v[2];
-                vendors.insert(vendor_code.to_string(), vendor_name.to_string());
+                vendors.insert(vendor_code.to_lowercase(), vendor_name.to_string());
             }
         }
 
@@ -32,7 +32,7 @@ impl VendorsDB {
     pub fn lookup(&self, mac: String) -> String {
         let v: Vec<&str> = mac.split(':').collect();
         let key: String = format!("{}{}{}", v[0], v[1], v[2]);
-
+      
         match self.db.get(&key) {
             Some(key) => key.clone(),
             None => "".into()

@@ -60,7 +60,7 @@ impl NetworkInterface {
         
         file.read_to_string(&mut str_mode)?;
         let mode: Vec<&str> = str_mode.split('\n').collect();
-        let mode_number: i32 = mode[0].parse::<i32>().unwrap();
+        let mode_number: i32 = mode[0].parse::<i32>()?;
 
         Ok(mode_number == ADAPTER_MONITOR_MODE)
     }
@@ -71,7 +71,7 @@ impl NetworkInterface {
             let filename = entry?.file_name().into_string().unwrap();
             if let Ok(found) = self.is_monitor_mode_device(filename.clone()) {
                 if found {
-                    println!("{:?}", filename);
+                    break;
                 }
             }
         }

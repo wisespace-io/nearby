@@ -1,10 +1,15 @@
+#[macro_use]
+extern crate serde_derive;
 extern crate bytes;
 extern crate pcap;
+extern crate console;
 extern crate byteorder;
 extern crate radiotap;
 #[macro_use] 
 extern crate error_chain;
 extern crate clap;
+extern crate serde;
+extern crate serde_json;
 
 mod util;
 mod info;
@@ -20,6 +25,8 @@ use mapper::*;
 use bytes::{Buf};
 use std::io::Cursor;
 use clap::{Arg, App};
+use std::time::Instant;
+use console::{style, Term};
 use linux_device_management::NetworkInterface;
 
 fn main() -> Result<()> {
@@ -52,10 +59,14 @@ fn main() -> Result<()> {
 
             // DLT_IEEE802_11_RADIO = 127
             if let Ok(_result) = cap.set_datalink(pcap::Linktype(127)) {
-                let mapper = Mapper::new()?;
-                let mut count = 0;
+                let mut mapper = Mapper::new()?;
+                let term = Term::stdout();
+                let start = Instant::now();
 
-                while count < 1000 {
+                while start.elapsed().as_secs() < 15 {
+                    let elapsed = start.elapsed().as_secs();
+                    term.write_line(&format!("Searching devices ... elapsed time {}", style(elapsed).cyan()))?;
+                    term.move_cursor_up(1)?;
                     match cap.next() {
                         Ok(packet) => {
                             let data: &[u8] = &packet;
@@ -68,7 +79,6 @@ fn main() -> Result<()> {
                                     let dot11_header = Dot11Header::from_bytes(&buf.bytes())?;
                                     mapper.map(tap_data, dot11_header);
                                 }
-                                count += 1;
                             }
                         }
                         // There were no packets on the interface before the timeout
@@ -77,16 +87,32 @@ fn main() -> Result<()> {
                         }
                         Err(e) => {
                             bail!("Unexpect error: {:?}", e.to_string())
-                        }            
-                    }  
+                        }
+                    }
                 }
+
+                term.clear_line()?;
+
+                // Print Access Point information
+                let mut net: Vec<Collection> = Vec::new();
+                for ap in mapper.net_map.values() {
+                    net.push(ap.clone());
+                }
+
+                let net_col = NetworkCollection {
+                    id: "NetworkCollection".into(),
+                    collection: net
+                };
+                let netjson = serde_json::to_string_pretty(&net_col)?;
+                println!("{}", netjson);
+
             } else {
                 bail!("Can not set datalink")
             }
         }
 
         if let Err(e) = wifi.monitor_mode_off() {
-            bail!("{:?}", e.to_string())
+            bail!("Monitor Mode Off: {:?}", e.to_string())
         }
     }
 

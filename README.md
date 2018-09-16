@@ -13,11 +13,13 @@ Scans nearby wifi networks and the devices connected to each network.
 
 ### Planned features
 
-- [ ] Map all devices nearby (Netjson)
+- [ ] Map all nearby devices (Netjson for visualization)
 - [ ] Count the number of people around you
 - [ ] GeoLocation (Distance from/to a device)
 
 ## Build
+
+On Debian based Linux, install `apt-get install libpcap-dev` so, build the project:
 
 ```rust
 cargo build --release
@@ -25,8 +27,10 @@ cargo build --release
 
 ## Usage
 
+Root access is required to `nearby` be able to set your wireless interface on `Monitor Mode`
+
 ```rust
-nearby -i your_wireless_device
+sudo target/release/nearby -i your_wireless_adapter
 ```
 
 I.e: wlan0, or just run iwconfig to get it
