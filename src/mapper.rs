@@ -115,7 +115,7 @@ impl Mapper {
         } else if frame_type == FrameType::Data {
             match self.net_map.get_mut(&dot11_header.bssid) {
                 Some(ref mut access_point) => {
-                    if dot11_header.dst.contains(BROADCAST) {
+                    if dot11_header.src.contains(BROADCAST) {
                         // Lets add the Node information
                         let vendor = self.vendors.lookup(dot11_header.src.clone());
                         let node = Node::new(dot11_header.src.clone(), vendor, 0);
@@ -127,7 +127,7 @@ impl Mapper {
                         if !access_point.links.contains(&link) {
                             access_point.push_link(link);
                         }
-                    } else {
+                    } else if dot11_header.dst.contains(BROADCAST) {
                         // Lets add the Node information
                         let vendor = self.vendors.lookup(dot11_header.dst.clone());
                         let node = Node::new(dot11_header.dst.clone(), vendor, 0);

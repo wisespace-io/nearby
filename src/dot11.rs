@@ -25,7 +25,20 @@ pub enum FrameSubType {
     Disasso,
     Auth,
     Deauth,
-    Unknown
+    Data,
+    DataCfAck,
+    DataCfPull,
+    DataCfAckCfPull,
+    NullData,
+    CfAck,
+    CfPull,
+    CfAckCfPull,
+    QoS,
+    QoSCfPull,
+    QoSCfAckCfPull,
+    QoSNullData,
+    Reserved,
+    UnHandled
 }
 
 #[derive(Clone, Debug)]
@@ -151,9 +164,18 @@ impl FrameControl {
             bail!("Unknow protocol version");
         }
 
+        let frame_type = FrameControl::frame_type(version_type_subtype);
+        
+        let frame_subtype = match frame_type {
+            FrameType::Management => FrameControl::frame_subtype(version_type_subtype),
+            FrameType::Data => FrameControl::data_frame_subtype(version_type_subtype),
+            FrameType::Control => FrameControl::frame_subtype(version_type_subtype),
+            FrameType::Unknown => FrameControl::frame_subtype(version_type_subtype), 
+        };
+
         let fc = FrameControl {
-            frame_type: FrameControl::frame_type(version_type_subtype),
-            frame_subtype: FrameControl::frame_subtype(version_type_subtype),
+            frame_type: frame_type,
+            frame_subtype: frame_subtype,
             to_ds: flag_is_set(flags.into(), 0),
             from_ds: flag_is_set(flags.into(), 1),
             more_flag: flag_is_set(flags.into(), 2),
@@ -193,9 +215,28 @@ impl FrameControl {
             10 => FrameSubType::Disasso,
             11 => FrameSubType::Auth,
             12 => FrameSubType::Deauth,
-            _ => FrameSubType::Unknown,
+            _ => FrameSubType::UnHandled,
         }
     }
+
+    fn data_frame_subtype(packet: u8) -> FrameSubType {
+        match (packet & 0b1111_0000) >> 4 {
+            0 => FrameSubType::Data,
+            1 => FrameSubType::DataCfAck,
+            2 => FrameSubType::DataCfPull,
+            3 => FrameSubType::DataCfAckCfPull,
+            4 => FrameSubType::NullData,
+            5 => FrameSubType::CfAck,
+            6 => FrameSubType::CfPull,
+            7 => FrameSubType::CfAckCfPull,
+            8 => FrameSubType::QoS,
+            10 => FrameSubType::QoSCfPull,
+            11 => FrameSubType::QoSCfAckCfPull,
+            12 => FrameSubType::QoSNullData,
+            13 => FrameSubType::Reserved,
+            _ => FrameSubType::UnHandled,
+        }
+    }    
 }
 
 #[derive(Clone, Debug)]

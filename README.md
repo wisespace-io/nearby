@@ -19,7 +19,7 @@ Scans nearby wifi networks and the devices connected to each network.
 
 ## Build
 
-On Debian based Linux, install `apt-get install libpcap-dev` so, build the project:
+On Debian based Linux, install `apt-get install libpcap-dev`, so build the project:
 
 ```rust
 cargo build --release
@@ -27,7 +27,7 @@ cargo build --release
 
 ## Usage
 
-Root access is required to `nearby` be able to set your wireless interface on `Monitor Mode`
+Root access is required to `nearby` be able to set the wireless interface on `Monitor Mode`
 
 ```rust
 sudo target/release/nearby -i your_wireless_adapter
