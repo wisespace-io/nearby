@@ -115,19 +115,7 @@ impl Mapper {
         } else if frame_type == FrameType::Data {
             match self.net_map.get_mut(&dot11_header.bssid) {
                 Some(ref mut access_point) => {
-                    if dot11_header.src.contains(BROADCAST) {
-                        // Lets add the Node information
-                        let vendor = self.vendors.lookup(dot11_header.src.clone());
-                        let node = Node::new(dot11_header.src.clone(), vendor, 0);
-                        if !access_point.nodes.contains(&node) {
-                            access_point.push_node(node);
-                        }
-                        // Lets add the Link information
-                        let link = Link::new(dot11_header.src, dot11_header.bssid);
-                        if !access_point.links.contains(&link) {
-                            access_point.push_link(link);
-                        }
-                    } else if dot11_header.dst.contains(BROADCAST) {
+                    if frame_subtype == FrameSubType::QoS || frame_subtype == FrameSubType::NullData {
                         // Lets add the Node information
                         let vendor = self.vendors.lookup(dot11_header.dst.clone());
                         let node = Node::new(dot11_header.dst.clone(), vendor, 0);
@@ -139,6 +127,18 @@ impl Mapper {
                         if !access_point.links.contains(&link) {
                             access_point.push_link(link);
                         }                        
+                    } else if frame_subtype == FrameSubType::Data {
+                        // Lets add the Node information
+                        let vendor = self.vendors.lookup(dot11_header.src.clone());
+                        let node = Node::new(dot11_header.src.clone(), vendor, 0);
+                        if !access_point.nodes.contains(&node) {
+                            access_point.push_node(node);
+                        }
+                        // Lets add the Link information
+                        let link = Link::new(dot11_header.src, dot11_header.bssid);
+                        if !access_point.links.contains(&link) {
+                            access_point.push_link(link);
+                        }
                     }
                 },
                 None => return
