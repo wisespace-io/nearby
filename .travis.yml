@@ -12,3 +12,7 @@ cache:
     directories:
         - target/debug/deps
         - target/debug/build
+addons:
+    apt:
+        packages:
+            - libpcap-dev
