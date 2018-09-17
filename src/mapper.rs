@@ -111,38 +111,15 @@ impl Mapper {
 
         // AssoResp with status == 0 would provide all info we need for the Node/Link
         if frame_type == FrameType::Management && frame_subtype == FrameSubType::AssoResp {
-            //println!("AssoResp: {:?}", dot11_header);
+            self.add_to_collection(dot11_header.dst, dot11_header.bssid);
         } else if frame_type == FrameType::Data {
-            match self.net_map.get_mut(&dot11_header.bssid) {
-                Some(ref mut access_point) => {
-                    if frame_subtype == FrameSubType::QoS || frame_subtype == FrameSubType::NullData {
-                        // Lets add the Node information
-                        let vendor = self.vendors.lookup(dot11_header.dst.clone());
-                        let node = Node::new(dot11_header.dst.clone(), vendor, 0);
-                        if !access_point.nodes.contains(&node) {
-                            access_point.push_node(node);
-                        }
-                        // Lets add the Link information
-                        let link = Link::new(dot11_header.dst, dot11_header.bssid);
-                        if !access_point.links.contains(&link) {
-                            access_point.push_link(link);
-                        }                        
-                    } else if frame_subtype == FrameSubType::Data {
-                        // Lets add the Node information
-                        let vendor = self.vendors.lookup(dot11_header.src.clone());
-                        let node = Node::new(dot11_header.src.clone(), vendor, 0);
-                        if !access_point.nodes.contains(&node) {
-                            access_point.push_node(node);
-                        }
-                        // Lets add the Link information
-                        let link = Link::new(dot11_header.src, dot11_header.bssid);
-                        if !access_point.links.contains(&link) {
-                            access_point.push_link(link);
-                        }
-                    }
-                },
-                None => return
-            }
+            if frame_subtype == FrameSubType::QoS || frame_subtype == FrameSubType::Data {
+                self.add_to_collection(dot11_header.src, dot11_header.bssid.clone());
+                self.add_to_collection(dot11_header.dst, dot11_header.bssid);
+            } else if frame_subtype == FrameSubType::NullData {
+                // NullData informs Device Power Serving mode
+                self.add_to_collection(dot11_header.dst, dot11_header.bssid);
+            }           
         } else if frame_type == FrameType::Management {
             // Lets use the Beacon frame to get Access Point information
             if let BodyInformation::Beacon(beacon) = info.clone() {
@@ -165,4 +142,27 @@ impl Mapper {
             self.net_map.insert(header.bssid, access_point);
         }
     }
+
+    fn add_to_collection(&mut self, mac: String, bssid: String) {
+        if !mac.contains(BROADCAST) {
+            let node = self.add_node(mac.clone());
+            let link = Link::new(mac, bssid.clone());
+            if let Some(access_point) = self.net_map.get_mut(&bssid) {
+                if !access_point.nodes.contains(&node) {
+                    access_point.push_node(node);
+                }
+
+                if !access_point.links.contains(&link) {
+                    access_point.push_link(link);
+                }
+            }
+        }
+    }
+
+    fn add_node(&mut self, mac: String) -> Node {
+        let vendor = self.vendors.lookup(mac.clone());
+        let node = Node::new(mac.clone(), vendor, 0);
+        node
+    }
 }
+

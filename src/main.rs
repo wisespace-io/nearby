@@ -29,6 +29,9 @@ use std::time::Instant;
 use console::{style, Term};
 use linux_device_management::NetworkInterface;
 
+const TIMEOUT: i32 = 10;
+const EXECUTION_WINDOW: u64 = 15;
+
 fn main() -> Result<()> {
     let matches = App::new("Nearby")
                         .args(&[
@@ -52,7 +55,7 @@ fn main() -> Result<()> {
 
             let mut cap = pcap::Capture::from_device(&device[..])?;
 
-            let mut cap = match cap.timeout(1).rfmon(true).open() {
+            let mut cap = match cap.timeout(TIMEOUT).rfmon(true).open() {
                 Ok(cap) => cap,
                 Err(_e) => bail!("Can not open device, you need root access"),
             };
@@ -63,7 +66,7 @@ fn main() -> Result<()> {
                 let term = Term::stdout();
                 let start = Instant::now();
 
-                while start.elapsed().as_secs() < 15 {
+                while start.elapsed().as_secs() < EXECUTION_WINDOW {
                     let elapsed = start.elapsed().as_secs();
                     term.write_line(&format!("Searching devices ... elapsed time {}", style(elapsed).cyan()))?;
                     term.move_cursor_up(1)?;
@@ -92,20 +95,7 @@ fn main() -> Result<()> {
                 }
 
                 term.clear_line()?;
-
-                // Print Access Point information
-                let mut net: Vec<Collection> = Vec::new();
-                for ap in mapper.net_map.values() {
-                    net.push(ap.clone());
-                }
-
-                let net_col = NetworkCollection {
-                    id: "NetworkCollection".into(),
-                    collection: net
-                };
-                let netjson = serde_json::to_string_pretty(&net_col)?;
-                println!("{}", netjson);
-
+                show_netjson(mapper)?;
             } else {
                 bail!("Can not set datalink")
             }
@@ -115,6 +105,24 @@ fn main() -> Result<()> {
             bail!("Monitor Mode Off: {:?}", e.to_string())
         }
     }
+
+    Ok(())
+}
+
+fn show_netjson(mapper: Mapper) -> Result<()> {
+    // Print Access Point information
+    let mut net: Vec<Collection> = Vec::new();
+    for ap in mapper.net_map.values() {
+        net.push(ap.clone());
+    }
+
+    let net_col = NetworkCollection {
+        id: "NetworkCollection".into(),
+        collection: net
+    };
+
+    let netjson = serde_json::to_string_pretty(&net_col)?;
+    println!("{}", netjson);
 
     Ok(())
 }
