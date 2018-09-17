@@ -131,15 +131,17 @@ impl Mapper {
     fn add_access_point(&mut self, ssid: String, dot11_header: Dot11Header) {
         if !dot11_header.bssid.contains(BROADCAST) && !dot11_header.bssid.contains(UNSPECIFIED) {
             let header = dot11_header.clone();
-            let mut access_point = Collection::new();
+            if !self.net_map.contains_key(&header.bssid.clone()) {
+                let mut access_point = Collection::new();
 
-            access_point.ssid = ssid.clone();
-            access_point.router_id = header.bssid.clone();
-            access_point.vendor = self.vendors.lookup(header.bssid.clone());
+                access_point.ssid = ssid.clone();
+                access_point.router_id = header.bssid.clone();
+                access_point.vendor = self.vendors.lookup(header.bssid.clone());
 
-            let node = Node::new(header.bssid.clone(), access_point.vendor.clone(), 0);
-            access_point.nodes.push(node);
-            self.net_map.insert(header.bssid, access_point);
+                let node = Node::new(header.bssid.clone(), access_point.vendor.clone(), 0);
+                access_point.nodes.push(node);
+                self.net_map.insert(header.bssid, access_point);
+            }
         }
     }
 
