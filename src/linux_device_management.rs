@@ -16,8 +16,8 @@ pub struct NetworkInterface {
 
 impl NetworkInterface {
     pub fn new<S>(network_interface: S) -> Result<(NetworkInterface)>
-        where S: Into<String>    
-    { 
+        where S: Into<String>
+    {
         let network_interface_name = network_interface.into();
         let network_interface_path = Path::new(NETWORK_INTERFACE_PATH).join(network_interface_name.clone());
         if !network_interface_path.exists() {
@@ -57,7 +57,7 @@ impl NetworkInterface {
         let mut str_mode = String::new();
         let path = format!("{}/{}/type", NETWORK_INTERFACE_PATH, entry);
         let mut file = File::open(&path)?;
-        
+
         file.read_to_string(&mut str_mode)?;
         let mode: Vec<&str> = str_mode.split('\n').collect();
         let mode_number: i32 = mode[0].parse::<i32>()?;
@@ -66,7 +66,7 @@ impl NetworkInterface {
     }
 
     pub fn find_monitor_interfaces(&self) -> Result<()> {
-        for entry in fs::read_dir(NETWORK_INTERFACE_PATH)? 
+        for entry in fs::read_dir(NETWORK_INTERFACE_PATH)?
         {
             let filename = entry?.file_name().into_string().unwrap();
             if let Ok(found) = self.is_monitor_mode_device(filename.clone()) {

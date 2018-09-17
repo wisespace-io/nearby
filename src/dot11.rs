@@ -112,7 +112,7 @@ impl Dot11Header {
         } else {
             dst.push_str(&addresses.addr1.addr);
             src.push_str(&addresses.addr2.addr);
-            bssid.push_str(&addresses.addr3.addr);            
+            bssid.push_str(&addresses.addr3.addr);
         }
 
         return (dst, src, bssid)
@@ -137,7 +137,7 @@ impl Dot11Header {
            },
            _ => return BodyInformation::UnHandled(true)
         }
-    }    
+    }
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -170,7 +170,7 @@ impl FrameControl {
             FrameType::Management => FrameControl::frame_subtype(version_type_subtype),
             FrameType::Data => FrameControl::data_frame_subtype(version_type_subtype),
             FrameType::Control => FrameControl::frame_subtype(version_type_subtype),
-            FrameType::Unknown => FrameControl::frame_subtype(version_type_subtype), 
+            FrameType::Unknown => FrameControl::frame_subtype(version_type_subtype),
         };
 
         let fc = FrameControl {

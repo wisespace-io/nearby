@@ -32,7 +32,7 @@ impl Info for Beacon {
 
         let timestamp = cursor.get_u64_le();
         let interval = cursor.get_u16_le();
-        let cap_info = cursor.get_u16_le();;
+        let cap_info = cursor.get_u16_le();
 
         let ssid = SSID::from_bytes(cursor.bytes());
         cursor.advance(ssid.ssid_len + 2); // 2 accounts for Id + Len
@@ -249,7 +249,7 @@ pub fn get_country(input: &[u8]) -> Country {
                 country = Country::from_bytes(cursor.bytes());
                 break;
             },
-            0x32...0x42 => cursor.advance(len), // Can appear before country             
+            0x32...0x42 => cursor.advance(len), // Can appear before country
             _ => {
                 break;
             }

@@ -40,9 +40,9 @@ impl Collection {
             version: String::new(),
             router_id: String::new(),
             vendor: String::new(),
-            signal: 0, 
+            signal: 0,
             nodes: Vec::new(),
-            links: Vec::new() 
+            links: Vec::new()
         }
     }
 
@@ -52,7 +52,7 @@ impl Collection {
 
     fn push_link(&mut self, link: Link) {
         self.links.push(link);
-    }    
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
@@ -119,7 +119,7 @@ impl Mapper {
             } else if frame_subtype == FrameSubType::NullData {
                 // NullData informs Device Power Serving mode
                 self.add_to_collection(dot11_header.dst, dot11_header.bssid);
-            }           
+            }
         } else if frame_type == FrameType::Management {
             // Lets use the Beacon frame to get Access Point information
             if let BodyInformation::Beacon(beacon) = info.clone() {
