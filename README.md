@@ -9,11 +9,9 @@
 
 Scans nearby wifi networks and the devices connected to each network.
 
-## WORK IN PROGRESS
+## Planned features
 
-### Planned features
-
-- [ ] Map all nearby devices (Netjson for visualization)
+- [ ] Map nearby devices ([Netjson for visualization](https://github.com/netjson/netjsongraph.js))
 - [ ] Count the number of people around you
 - [ ] GeoLocation (Distance from/to a device)
 

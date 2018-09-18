@@ -77,7 +77,7 @@ fn main() -> Result<()> {
                                 if let Ok(tap_data) = radiotap_header {
                                     let mut buf = Cursor::new(data);
                                     buf.advance(tap_data.header.length);
-                                
+
                                     let dot11_header = Dot11Header::from_bytes(&buf.bytes())?;
                                     mapper.map(tap_data, dot11_header);
                                 }
@@ -88,7 +88,7 @@ fn main() -> Result<()> {
                             continue;
                         }
                         Err(e) => {
-                            bail!("Unexpect error: {:?}", e.to_string())
+                            bail!("Unexpect error: {}", e.to_string())
                         }
                     }
                 }
