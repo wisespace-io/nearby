@@ -164,7 +164,8 @@ impl Mapper {
             let node = self.add_node(mac.clone(), signal);
             let link = Link::new(mac, bssid.clone());
             if let Some(access_point) = self.net_map.get_mut(&bssid) {
-                if !access_point.nodes.contains(&node) {
+                let mut node_iter = access_point.nodes.clone().into_iter();
+                if node_iter.find(| ref mut x| x.mac == node.mac) == None {
                     access_point.push_node(node);
                 }
 
