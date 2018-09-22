@@ -5,6 +5,7 @@ use info::*;
 use radiotap::Radiotap;
 use std::collections::HashMap;
 
+const FREE_SPACE_PATH_LOSS: f32 = 27.55;
 static PROTOCOL: &'static str = "802.11";
 static BROADCAST: &'static str = "ff:ff:ff:ff:ff:ff";
 static UNSPECIFIED: &'static str = "00:00:00:00:00:00";
@@ -113,18 +114,24 @@ impl Mapper {
         })
     }
 
-    pub fn map(&mut self, _radio_header: Radiotap, dot11_header: Dot11Header) {
+    pub fn map(&mut self, radio_header: Radiotap, dot11_header: Dot11Header) {
         let info = dot11_header.info.clone();
         let frame_type = dot11_header.frame_control.frame_type;
         let frame_subtype = dot11_header.frame_control.frame_subtype;
-        let signal = match _radio_header.antenna_signal {
+        let signal = match radio_header.antenna_signal {
             Some(antenna_signal) => antenna_signal.value,
             None => 0
         };
 
-        // AssoResp with status == 0 would provide all info we need for the Node/Link
-        if frame_type == FrameType::Management && frame_subtype == FrameSubType::AssoResp {
-            self.add_to_collection(dot11_header.dst, dot11_header.bssid, signal);
+        let freq: f32 = match radio_header.channel {
+            Some(channel) => channel.freq as f32,
+            None => 0.0
+        };
+
+        // We should monitor the Probe Request frames for positioning information
+        if frame_type == FrameType::Management && frame_subtype == FrameSubType::ProbeReq {
+            self.add_to_collection(dot11_header.src, dot11_header.bssid, signal);
+            self.calc_distance(freq, signal); // TODO: Add the distance to the Node
         } else if frame_type == FrameType::Data {
             if frame_subtype == FrameSubType::QoS || frame_subtype == FrameSubType::Data {
                 self.add_to_collection(dot11_header.src, dot11_header.bssid.clone(), signal);
@@ -180,5 +187,12 @@ impl Mapper {
         let vendor = self.vendors.lookup(mac.clone());
         let node = Node::new(mac.clone(), vendor, signal);
         node
+    }
+
+    // https://en.wikipedia.org/wiki/Free-space_path_loss
+    fn calc_distance(&mut self, freq: f32, signal: i8) -> f32 {
+        let value = 10_f32;
+        let expr = (FREE_SPACE_PATH_LOSS - (20.0*freq.log10()) + (-signal as f32)) / 20.0;
+        value.powf(expr)
     }
 }
