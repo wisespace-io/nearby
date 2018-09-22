@@ -10,12 +10,16 @@ extern crate error_chain;
 extern crate clap;
 extern crate serde;
 extern crate serde_json;
+extern crate actix;
+extern crate actix_web;
+extern crate env_logger;
 
 mod util;
 mod info;
 mod errors;
 mod dot11;
 mod vendors;
+mod server;
 mod mapper;
 mod linux_device_management;
 
@@ -41,10 +45,18 @@ fn main() -> Result<()> {
                                     .long("interface")
                                     .multiple(true)
                                     .help("wireless interface")
-                                    .required(true),
-                            Arg::with_name("nolog")
-                                    .help("Don't output log file")
-                                    .long("nolog")
+                                    .required(false),
+                            Arg::with_name("graph")
+                                    .help("Visualize the netjson")
+                                    .short("g")
+                                    .long("graph")
+                                    .required(false),
+                            Arg::with_name("netjson")
+                                    .help("Create a netjson file")
+                                    .short("n")
+                                    .long("netjson")
+                                    .default_value("networks.json")
+                                    .required(false)
                         ]).get_matches();
     
     if let Some(device) = matches.value_of("interface") {
@@ -94,7 +106,13 @@ fn main() -> Result<()> {
                 }
 
                 term.clear_line()?;
-                show_netjson(mapper)?;
+
+                let netjson = util::create_netjson(mapper)?;
+                if let Some(output) = matches.value_of("netjson") {
+                    util::save_netjson(output, netjson)?;
+                } else {
+                    println!("{}", netjson);
+                }
             } else {
                 bail!("Can not set datalink")
             }
@@ -105,23 +123,9 @@ fn main() -> Result<()> {
         }
     }
 
-    Ok(())
-}
-
-fn show_netjson(mapper: Mapper) -> Result<()> {
-    // Print Access Point information
-    let mut net: Vec<Collection> = Vec::new();
-    for ap in mapper.net_map.values() {
-        net.push(ap.clone());
-    }
-
-    let net_col = NetworkCollection {
-        id: "NetworkCollection".into(),
-        collection: net
-    };
-
-    let netjson = serde_json::to_string_pretty(&net_col)?;
-    println!("{}", netjson);
+    if matches.is_present("graph") {
+        server::start();
+    }    
 
     Ok(())
 }

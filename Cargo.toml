@@ -5,7 +5,7 @@ authors = ["Flavio <flavio@wisespace.io>"]
 license = "MIT OR Apache-2.0"
 
 description = "Scans all nearby wifi networks and the devices connected to each network"
-keywords = ["wireless", "wifi", "dot11"]
+keywords = ["wireless", "wifi", "dot11", "netjson"]
 documentation = "https://github.com/wisespace-io/nearby"
 repository = "https://github.com/wisespace-io/nearby"
 readme = "README.md"
@@ -20,4 +20,8 @@ console = "0.6.2"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
+futures = "0.1"
+env_logger = "0.5"
+actix = "0.7"
+actix-web = "0.7"
 error-chain = "0.12"

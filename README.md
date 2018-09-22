@@ -11,7 +11,7 @@ Scans nearby wifi networks and the devices connected to each network.
 
 ## Planned features
 
-- [ ] Map nearby devices ([Netjson for visualization](https://github.com/netjson/netjsongraph.js))
+- [x] Map nearby devices ([Netjson for visualization](https://github.com/netjson/netjsongraph.js))
 - [ ] Count the number of people around you
 - [ ] GeoLocation (Distance from/to a device)
 
@@ -29,6 +29,18 @@ Root access is required to `nearby` be able to set the wireless interface on `Mo
 
 ```rust
 sudo target/release/nearby -i your_wireless_adapter
+```
+
+Use `--netjson` to generate `networks.json` and use it to graph visualization
+
+```rust
+sudo target/release/nearby -i your_wireless_adapter --netjson
+```
+
+Use `--graph` to start a webserver and visualize the generated file (`networks.json`)
+
+```rust
+target/release/nearby --graph
 ```
 
 I.e: wlan0, or just run iwconfig to get it

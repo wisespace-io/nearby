@@ -1,0 +1,25 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nearby</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="netjson/netjsongraph.css" />
+    <link href="netjson/netjsongraph-theme.css" rel="stylesheet">
+    <style>body {overflow: hidden}</style>
+</head>
+<body>
+    <script src="netjson/lib/d3.min.js"></script>
+    <script src="netjson/netjsongraph.js"></script>
+    <script>d3.netJsonGraph("networks.json", {
+            linkDistance: 150,
+            charge: -200,
+            circleRadius: 12,
+            defaultStyle: false,
+            linkClassProperty: "type",
+            nodeClassProperty: "signal",
+            labelDy: "-1.8em"
+        });
+    </script>
+</body>
+</html>
