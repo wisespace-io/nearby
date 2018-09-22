@@ -31,7 +31,9 @@ Root access is required to `nearby` be able to set the wireless interface on `Mo
 sudo target/release/nearby -i your_wireless_adapter
 ```
 
-Use `--netjson` to generate `networks.json` and use it to graph visualization
+I.e: wlan0, or just run iwconfig to get it
+
+Use `--netjson` to generate `networks.json` and use it as input to visualization
 
 ```rust
 sudo target/release/nearby -i your_wireless_adapter --netjson
@@ -42,8 +44,6 @@ Use `--graph` to start a webserver and visualize the generated file (`networks.j
 ```rust
 target/release/nearby --graph
 ```
-
-I.e: wlan0, or just run iwconfig to get it
 
 ## WiFi adapter should support monitor mode
 
