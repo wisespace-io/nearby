@@ -13,6 +13,8 @@ Scans nearby wifi networks and the devices connected to each network.
 
 - [x] Map nearby devices ([Netjson for visualization](https://github.com/netjson/netjsongraph.js))
 - [ ] Count the number of people around you
+- [ ] Watch specific Mac Address (For alerts)
+- [ ] BLE Indoor Positioning
 - [ ] GeoLocation (Distance from/to a device)
 
 ## Build
@@ -24,6 +26,8 @@ cargo build --release
 ```
 
 ## Usage
+
+### Nearby Devices
 
 Root access is required to `nearby` be able to set the wireless interface on `Monitor Mode`
 
@@ -43,6 +47,14 @@ Use `--graph` to start a webserver and visualize the generated file (`networks.j
 
 ```rust
 target/release/nearby --graph
+```
+
+### People around you (Work In Progress)
+
+Use `--people` to generate `people.json`. It will watch Probe Requests and filter the mobiles according to the vendor list specified.
+
+```rust
+sudo target/release/nearby -i your_wireless_adapter --people
 ```
 
 ## WiFi adapter should support monitor mode

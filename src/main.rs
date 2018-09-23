@@ -15,16 +15,14 @@ extern crate actix_web;
 extern crate env_logger;
 
 mod util;
-mod info;
 mod errors;
 mod dot11;
-mod vendors;
 mod server;
 mod mapper;
 mod linux_device_management;
 
 use errors::*;
-use dot11::*;
+use dot11::header::*;
 use mapper::*;
 use bytes::{Buf};
 use std::io::Cursor;
@@ -34,7 +32,8 @@ use console::{style, Term};
 use linux_device_management::NetworkInterface;
 
 const TIMEOUT: i32 = 10;
-const EXECUTION_WINDOW: u64 = 15;
+const DEFAULT_EXECUTION_WINDOW: u64 = 15;
+const LONG_EXECUTION_WINDOW: u64 = 60;
 
 fn main() -> Result<()> {
     let matches = App::new("Nearby")
@@ -55,7 +54,11 @@ fn main() -> Result<()> {
                                     .help("Create a netjson file")
                                     .short("n")
                                     .long("netjson")
-                                    .default_value("networks.json")
+                                    .required(false),
+                            Arg::with_name("people")
+                                    .help("Outputs a json with the devices")
+                                    .short("p")
+                                    .long("people")
                                     .required(false)
                         ]).get_matches();
     
@@ -71,13 +74,19 @@ fn main() -> Result<()> {
                 Err(_e) => bail!("Can not open device, you need root access"),
             };
 
+            let people = matches.is_present("people");
+            let mut execution_window = DEFAULT_EXECUTION_WINDOW;
+
+            if people {
+                execution_window = LONG_EXECUTION_WINDOW;
+            }
             // DLT_IEEE802_11_RADIO = 127
             if let Ok(_result) = cap.set_datalink(pcap::Linktype(127)) {
                 let mut mapper = Mapper::new()?;
                 let term = Term::stdout();
                 let start = Instant::now();
 
-                while start.elapsed().as_secs() < EXECUTION_WINDOW {
+                while start.elapsed().as_secs() < execution_window {
                     let elapsed = start.elapsed().as_secs();
                     term.write_line(&format!("Searching devices ... elapsed time {}", style(elapsed).cyan()))?;
                     term.move_cursor_up(1)?;
@@ -91,7 +100,7 @@ fn main() -> Result<()> {
                                     buf.advance(tap_data.header.length);
 
                                     let dot11_header = Dot11Header::from_bytes(&buf.bytes())?;
-                                    mapper.map(tap_data, dot11_header);
+                                    mapper.map(tap_data, dot11_header, people);
                                 }
                             }
                         }
@@ -107,11 +116,16 @@ fn main() -> Result<()> {
 
                 term.clear_line()?;
 
-                let netjson = util::create_netjson(mapper)?;
-                if let Some(output) = matches.value_of("netjson") {
-                    util::save_netjson(output, netjson)?;
+                if people {
+                    println!("{}", util::format_people_json(mapper)?);
                 } else {
-                    println!("{}", netjson);
+                    let netjson = util::create_netjson(mapper)?;
+                    if matches.is_present("netjson") {
+                        let output = matches.value_of("netjson").unwrap_or("networks.json");
+                        util::save_netjson(output, netjson)?;
+                    } else {
+                        println!("{}", netjson);
+                    }
                 }
             } else {
                 bail!("Can not set datalink")

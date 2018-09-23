@@ -1,7 +1,7 @@
 use errors::*;
-use vendors::*;
-use dot11::*;
-use info::*;
+use dot11::vendors::*;
+use dot11::header::*;
+use dot11::info::*;
 use radiotap::Radiotap;
 use std::collections::HashMap;
 
@@ -98,10 +98,19 @@ impl Link {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct People {
+    pub mac: String,
+    pub vendor: String,
+    pub signal: i8,
+    pub distance: f32
+}
+
 #[derive(Clone, Debug)]
 pub struct Mapper {
     pub vendors: VendorsDB,
-    pub net_map: HashMap<String, Collection>
+    pub net_map: HashMap<String, Collection>,
+    pub people_map: HashMap<String, People>
 }
 
 impl Mapper {
@@ -110,11 +119,12 @@ impl Mapper {
 
         Ok(Mapper {
             vendors: vendors,
-            net_map: HashMap::new()
+            net_map: HashMap::new(),
+            people_map: HashMap::new()
         })
     }
 
-    pub fn map(&mut self, radio_header: Radiotap, dot11_header: Dot11Header) {
+    pub fn map(&mut self, radio_header: Radiotap, dot11_header: Dot11Header, people: bool) {
         let info = dot11_header.info.clone();
         let frame_type = dot11_header.frame_control.frame_type;
         let frame_subtype = dot11_header.frame_control.frame_subtype;
@@ -128,22 +138,27 @@ impl Mapper {
             None => 0.0
         };
 
-        // We should monitor the Probe Request frames for positioning information
-        if frame_type == FrameType::Management && frame_subtype == FrameSubType::ProbeReq {
-            self.add_to_collection(dot11_header.src, dot11_header.bssid, signal);
-            self.calc_distance(freq, signal); // TODO: Add the distance to the Node
-        } else if frame_type == FrameType::Data {
-            if frame_subtype == FrameSubType::QoS || frame_subtype == FrameSubType::Data {
-                self.add_to_collection(dot11_header.src, dot11_header.bssid.clone(), signal);
-                self.add_to_collection(dot11_header.dst, dot11_header.bssid, signal);
-            } else if frame_subtype == FrameSubType::NullData {
-                // NullData informs Device Power Serving mode
-                self.add_to_collection(dot11_header.dst, dot11_header.bssid, signal);
+        if people {
+            if frame_type == FrameType::Management && frame_subtype == FrameSubType::ProbeReq {
+                self.add_people(dot11_header.src, freq, signal);
             }
-        } else if frame_type == FrameType::Management {
-            // Lets use the Beacon frame to get Access Point information
-            if let BodyInformation::Beacon(beacon) = info.clone() {
-                self.add_access_point(beacon.ssid.value, signal, dot11_header);
+        } else {
+            // We should monitor the Probe Request frames for positioning information
+            if frame_type == FrameType::Management && frame_subtype == FrameSubType::ProbeReq {
+                self.add_to_collection(dot11_header.src, dot11_header.bssid, signal);
+            } else if frame_type == FrameType::Data {
+                if frame_subtype == FrameSubType::QoS || frame_subtype == FrameSubType::Data {
+                    self.add_to_collection(dot11_header.src, dot11_header.bssid.clone(), signal);
+                    self.add_to_collection(dot11_header.dst, dot11_header.bssid, signal);
+                } else if frame_subtype == FrameSubType::NullData {
+                    // NullData informs Device Power Serving mode
+                    self.add_to_collection(dot11_header.dst, dot11_header.bssid, signal);
+                }
+            } else if frame_type == FrameType::Management {
+                // Lets use the Beacon frame to get Access Point information
+                if let BodyInformation::Beacon(beacon) = info.clone() {
+                    self.add_access_point(beacon.ssid.value, signal, dot11_header);
+                }
             }
         }
     }
@@ -187,6 +202,24 @@ impl Mapper {
         let vendor = self.vendors.lookup(mac.clone());
         let node = Node::new(mac.clone(), vendor, signal);
         node
+    }
+
+    fn add_people(&mut self, src: String, freq: f32, signal: i8) {
+        // Add phone vendors here but move for a Lazy Load initialization later
+        let phone_vendors = vec![
+            "Samsung Electronics Co.,Ltd", "Apple, Inc.", "HTC Corporation",
+            "Huawei Symantec Technologies Co.,Ltd.", "Google, Inc."
+        ];
+
+        // Get Mobile Phone vendor
+        let vendor = self.vendors.lookup(src.clone());
+        if phone_vendors.contains(&vendor.as_str()) {
+            let distance = self.calc_distance(freq, signal);
+            let person = People { 
+                mac: src.clone(), vendor: vendor, signal: signal, distance: distance
+            };
+            self.people_map.insert(src, person);
+        }
     }
 
     // https://en.wikipedia.org/wiki/Free-space_path_loss

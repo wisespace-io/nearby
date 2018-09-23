@@ -32,9 +32,20 @@ pub fn create_netjson(mapper: Mapper) -> Result<(String)> {
     Ok(netjson)
 }
 
+pub fn format_people_json(mapper: Mapper) -> Result<(String)> {
+    let mut people_vec: Vec<People> = Vec::new();
+    for person in mapper.people_map.values() {
+        people_vec.push(person.clone());
+    }
+
+    let json = to_string_pretty(&people_vec)?;
+
+    Ok(json)
+}
+
 pub fn save_netjson(file: &str, content: String) -> Result<()> {
     let mut file = File::create("static/".to_owned() + file)?;
     file.write_all(content.as_bytes())?;
-    println!("networks.json generated");
+    println!("static/networks.json generated");
     Ok(())
 }

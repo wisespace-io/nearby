@@ -2,7 +2,7 @@ use util::*;
 use errors::*;
 use bytes::{Buf, IntoBuf, Bytes};
 use std::io::{Cursor, self};
-use info::*;
+use dot11::info::*;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum FrameType {
