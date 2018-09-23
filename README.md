@@ -51,15 +51,18 @@ target/release/nearby --graph
 
 ### People around you (Work In Progress)
 
-Use `--people` to generate `people.json`. It will watch Probe Requests and filter the mobiles according to the vendor list specified.
+Use `--people` to generate `people.json`. It will watch Probe Requests and filter the mobiles according to a specified mobile phone vendor list.
 
 ```rust
 sudo target/release/nearby -i your_wireless_adapter --people
 ```
 
-## WiFi adapter should support monitor mode
+Note: The default scan time is 60s, if it stops working after a short period of time often with the error message `libpcap error: The interface went down`, it may be because another running process is causing it. On Ubuntu, you may be the network-manager, try `service network-manager stop`.
 
-There are many USB WiFi adapters that support monitor mode, i.e:
+## Wifi adapter should support monitor mode
+
+There are many USB Wifi adapters that support monitor mode, i.e:
 
 - Alfa AWUS036NHA
+- Alfa AWUS036NEH
 - TP-Link TL-WN722N (ONLY Version 1)

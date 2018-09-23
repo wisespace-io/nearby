@@ -208,7 +208,8 @@ impl Mapper {
         // Add phone vendors here but move for a Lazy Load initialization later
         let phone_vendors = vec![
             "Samsung Electronics Co.,Ltd", "Apple, Inc.", "HTC Corporation",
-            "Huawei Symantec Technologies Co.,Ltd.", "Google, Inc."
+            "Huawei Symantec Technologies Co.,Ltd.", "Google, Inc.", "Microsoft",
+            "Motorola (Wuhan) Mobility Technologies Communication Co., Ltd."
         ];
 
         // Get Mobile Phone vendor
