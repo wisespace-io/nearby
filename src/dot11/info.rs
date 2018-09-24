@@ -23,6 +23,7 @@ pub struct Beacon {
     pub cap_info: u16,
     pub ssid: SSID,
     pub supported_rates: Vec<f32>,
+    pub current_channel: u8,
     pub country: Country
 }
 
@@ -38,7 +39,7 @@ impl Info for Beacon {
         cursor.advance(ssid.ssid_len + 2); // 2 accounts for Id + Len
         let supported_rates = supported_rates(cursor.bytes());
         cursor.advance(supported_rates.len() + 2); // 2 accounts for Id + Len
-        let country = get_country(cursor.bytes());
+        let info = get_info(cursor.bytes());
 
         Beacon {
            timestamp: timestamp,
@@ -46,7 +47,8 @@ impl Info for Beacon {
            cap_info: cap_info,
            ssid: ssid,
            supported_rates: supported_rates,
-           country: country
+           current_channel: info.current_channel,
+           country: info.country
         }
     }
 }
@@ -78,6 +80,7 @@ pub struct ProbeResponse {
     pub cap_info: u16,
     pub ssid: SSID,
     pub supported_rates: Vec<f32>,
+    pub current_channel: u8,
     pub country: Country
 }
 
@@ -93,7 +96,7 @@ impl Info for ProbeResponse {
         cursor.advance(ssid.ssid_len + 2); // 2 accounts for Id + Len
         let supported_rates = supported_rates(cursor.bytes());
         cursor.advance(supported_rates.len() + 2); // 2 accounts for Id + Len
-        let country = get_country(cursor.bytes());
+        let info = get_info(cursor.bytes());
 
         ProbeResponse {
            timestamp: timestamp,
@@ -101,7 +104,8 @@ impl Info for ProbeResponse {
            cap_info: cap_info,
            ssid: ssid,
            supported_rates: supported_rates,
-           country: country
+           current_channel: info.current_channel,
+           country: info.country
         }
     }
 }
@@ -189,11 +193,27 @@ pub struct Country {
 impl Info for Country {
     fn from_bytes(input: &[u8]) -> Country {
         let mut buf = Bytes::from(input);
-        let country_code =  buf.split_to(3); // Country code has 3 bytes
-
+        let country_code = buf.split_to(3); // Country code has 3 bytes
         // We should include the supported channels
         Country {
             country_code: String::from_utf8(country_code.to_vec()).unwrap_or("".to_string())
+        }
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct AdditionalInfo {
+    country: Country,
+    current_channel: u8 
+}
+
+impl AdditionalInfo {
+    pub fn new() -> AdditionalInfo {
+        let country = Country { ..Default::default() };
+
+        AdditionalInfo {
+            country: country,
+            current_channel: 0
         }
     }
 }
@@ -230,24 +250,26 @@ pub fn supported_rates(input: &[u8]) -> Vec<f32> {
     rates
 }
 
-pub fn get_country(input: &[u8]) -> Country {
+pub fn get_info(input: &[u8]) -> AdditionalInfo {
     let mut cursor = Cursor::new(input);
-    let mut country = Country { ..Default::default() };
-
+    let mut info = AdditionalInfo::new();
+    
     loop {
         let element_id = cursor.get_u8();
         let len = cursor.get_u8() as usize;
 
-        // Skipping some fields as we just want the country info for now
+        // Skipping some fields
         match element_id {
             0x02 => cursor.advance(len), // FH Parameter Set
-            0x03 => cursor.advance(len), // DS Parameter Set
+            0x03 => { // DS Parameter Set
+                info.current_channel = cursor.get_u8();
+            },
             0x04 => cursor.advance(len), // CF Parameter Set
             0x05 => cursor.advance(len), // TIM
             0x06 => cursor.advance(len), // IBSS
             0x07 => {
-                country = Country::from_bytes(cursor.bytes());
-                break;
+                info.country = Country::from_bytes(cursor.bytes());
+                cursor.advance(len);
             },
             0x32...0x42 => cursor.advance(len), // Can appear before country
             _ => {
@@ -256,5 +278,5 @@ pub fn get_country(input: &[u8]) -> Country {
         }
     }
 
-    country
+    info
 }

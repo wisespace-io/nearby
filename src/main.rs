@@ -33,7 +33,7 @@ use linux_device_management::NetworkInterface;
 
 const TIMEOUT: i32 = 10;
 const DEFAULT_EXECUTION_WINDOW: u64 = 15;
-const LONG_EXECUTION_WINDOW: u64 = 60;
+const LONG_EXECUTION_WINDOW: u64 = 120;
 
 fn main() -> Result<()> {
     let matches = App::new("Nearby")

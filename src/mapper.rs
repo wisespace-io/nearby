@@ -29,6 +29,7 @@ pub struct Collection {
     router_id: String, // BSSID
     label: String,
     signal: i8,
+    current_channel: u8,
     nodes: Vec<Node>,
     links: Vec<Link>
 }
@@ -42,6 +43,7 @@ impl Collection {
             router_id: String::new(),
             label: String::new(),
             signal: 0,
+            current_channel: 0,
             nodes: Vec::new(),
             links: Vec::new()
         }
@@ -157,20 +159,21 @@ impl Mapper {
             } else if frame_type == FrameType::Management {
                 // Lets use the Beacon frame to get Access Point information
                 if let BodyInformation::Beacon(beacon) = info.clone() {
-                    self.add_access_point(beacon.ssid.value, signal, dot11_header);
+                    self.add_access_point(beacon, signal, dot11_header);
                 }
             }
         }
     }
 
-    fn add_access_point(&mut self, ssid: String, signal: i8, dot11_header: Dot11Header) {
+    fn add_access_point(&mut self, beacon: Beacon, signal: i8, dot11_header: Dot11Header) {
         if !dot11_header.bssid.contains(BROADCAST) && !dot11_header.bssid.contains(UNSPECIFIED) {
             let header = dot11_header.clone();
             if !self.net_map.contains_key(&header.bssid.clone()) {
                 let mut access_point = Collection::new();
 
-                access_point.ssid = ssid.clone();
+                access_point.ssid = beacon.ssid.value.clone();
                 access_point.signal = signal;
+                access_point.current_channel = beacon.current_channel;
                 access_point.router_id = header.bssid.clone();
                 access_point.label = self.vendors.lookup(header.bssid.clone());
 

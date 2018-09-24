@@ -1,6 +1,6 @@
 [package]
 name = "nearby"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Flavio <flavio@wisespace.io>"]
 license = "MIT OR Apache-2.0"
 
