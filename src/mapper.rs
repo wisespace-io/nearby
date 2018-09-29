@@ -9,7 +9,7 @@ const FREE_SPACE_PATH_LOSS: f32 = 27.55;
 static PROTOCOL: &'static str = "802.11";
 static BROADCAST: &'static str = "ff:ff:ff:ff:ff:ff";
 static UNSPECIFIED: &'static str = "00:00:00:00:00:00";
-
+static MULTICAST: &'static str = "33:33:00:";
 
 // Access Point Information mapped to NetJson format
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -23,13 +23,13 @@ pub struct NetworkCollection {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Collection {
     #[serde(rename = "type")]
-    ssid: String,
-    protocol: String,
-    version: String,
-    router_id: String, // BSSID
-    label: String,
-    signal: i8,
-    current_channel: u8,
+    pub ssid: String,
+    pub protocol: String,
+    pub version: String,
+    pub router_id: String, // BSSID
+    pub label: String,
+    pub signal: i8,
+    pub current_channel: u8,
     nodes: Vec<Node>,
     links: Vec<Link>
 }
@@ -185,7 +185,7 @@ impl Mapper {
     }
 
     fn add_to_collection(&mut self, mac: String, bssid: String, signal: i8) {
-        if !mac.contains(BROADCAST) {
+        if !mac.contains(BROADCAST) && !mac.starts_with(MULTICAST) {
             let node = self.add_node(mac.clone(), signal);
             let link = Link::new(mac, bssid.clone());
             if let Some(access_point) = self.net_map.get_mut(&bssid) {

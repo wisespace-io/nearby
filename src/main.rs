@@ -8,6 +8,7 @@ extern crate radiotap;
 #[macro_use] 
 extern crate error_chain;
 extern crate clap;
+extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
 extern crate actix;
@@ -32,8 +33,8 @@ use console::{style, Term};
 use linux_device_management::NetworkInterface;
 
 const TIMEOUT: i32 = 10;
-const DEFAULT_EXECUTION_WINDOW: u64 = 15;
-const LONG_EXECUTION_WINDOW: u64 = 120;
+const DEFAULT_EXECUTION_WINDOW: usize = 15;
+const LONG_EXECUTION_WINDOW: usize = 120;
 
 fn main() -> Result<()> {
     let matches = App::new("Nearby")
@@ -59,14 +60,15 @@ fn main() -> Result<()> {
                                     .help("Outputs a json with the devices")
                                     .short("p")
                                     .long("people")
-                                    .required(false)
+                                    .required(false)                                
                         ]).get_matches();
     
     if let Some(device) = matches.value_of("interface") {
-        let wifi = NetworkInterface::new(device)?;
+        let mut wifi = NetworkInterface::new(device)?;
 
         if let Ok(_value) = wifi.monitor_mode_on() {
             wifi.find_monitor_interfaces()?;
+            wifi.find_supported_channels()?;
 
             let mut cap = pcap::Capture::from_device(&device[..])?;
             let mut cap = match cap.timeout(TIMEOUT).rfmon(true).open() {
@@ -75,7 +77,7 @@ fn main() -> Result<()> {
             };
 
             let people = matches.is_present("people");
-            let mut execution_window = DEFAULT_EXECUTION_WINDOW;
+            let mut execution_window = DEFAULT_EXECUTION_WINDOW + wifi.channels.len();
 
             if people {
                 execution_window = LONG_EXECUTION_WINDOW;
@@ -86,7 +88,8 @@ fn main() -> Result<()> {
                 let term = Term::stdout();
                 let start = Instant::now();
 
-                while start.elapsed().as_secs() < execution_window {
+                wifi.start_channel_switch();
+                while start.elapsed().as_secs() < (execution_window as u64) {
                     let elapsed = start.elapsed().as_secs();
                     term.write_line(&format!("Searching devices ... elapsed time {}", style(elapsed).cyan()))?;
                     term.move_cursor_up(1)?;
@@ -117,7 +120,7 @@ fn main() -> Result<()> {
                 term.clear_line()?;
 
                 if people {
-                    println!("{}", util::format_people_json(mapper)?);
+                    println!("{}", util::format_people_json(mapper)?);                  
                 } else {
                     let netjson = util::create_netjson(mapper)?;
                     if matches.is_present("netjson") {
@@ -139,7 +142,7 @@ fn main() -> Result<()> {
 
     if matches.is_present("graph") {
         server::start();
-    }    
+    }
 
     Ok(())
 }

@@ -1,4 +1,6 @@
 use errors::*;
+use std::thread;
+use std::time::Duration;
 use std::io::prelude::*;
 use std::fs::{self, File};
 use std::process::Command;
@@ -9,8 +11,9 @@ static NETWORK_INTERFACE_PATH: &'static str = "/sys/class/net";
 
 #[derive(Clone, Debug)]
 pub struct NetworkInterface {
-    name: String,
-    path: PathBuf,
+    pub name: String,
+    pub path: PathBuf,
+    pub channels: Vec<String>,
     wireless: bool,
 }
 
@@ -29,6 +32,7 @@ impl NetworkInterface {
         Ok(NetworkInterface {
             name: network_interface_name,
             path: network_interface_path,
+            channels: Vec::new(),
             wireless: wireless,
         })
     }
@@ -66,8 +70,7 @@ impl NetworkInterface {
     }
 
     pub fn find_monitor_interfaces(&self) -> Result<()> {
-        for entry in fs::read_dir(NETWORK_INTERFACE_PATH)?
-        {
+        for entry in fs::read_dir(NETWORK_INTERFACE_PATH)? {
             let filename = entry?.file_name().into_string().unwrap();
             if let Ok(found) = self.is_monitor_mode_device(filename.clone()) {
                 if found {
@@ -77,5 +80,37 @@ impl NetworkInterface {
         }
 
         Ok(())
+    }
+
+    pub fn find_supported_channels(&mut self) -> Result<()> {
+        let iwlist = Command::new("iwlist").arg(self.name.clone()).arg("freq").output()?;
+        let output = String::from_utf8_lossy(&iwlist.stdout);
+        let lines: Vec<&str> = output.split('\n').collect();
+      
+        for line in lines {
+            let mut channels: Vec<String> = line.split(" : ").map(|s| s.into()).collect();
+            if channels[0].contains(" Channel ") {
+                let ch = channels[0].trim().replace("Channel ", "");
+                self.channels.push(ch);
+            }
+        }
+        Ok(())
+    }
+
+    pub fn start_channel_switch(&self) {
+        let name = self.name.clone();
+        let channels = self.channels.clone();
+        let mut index = 0;
+
+        let _handle = thread::spawn(move || {
+            loop {
+                index = (index + 1) % channels.len();
+                let _cmd_status = Command::new("iwconfig").arg(name.clone())
+                                                          .arg("channel")
+                                                          .arg(channels[index].clone())
+                                                          .status().unwrap();
+                thread::sleep(Duration::from_millis(1000)); // one second per channel may be too little.
+            }
+        });
     }
 }
