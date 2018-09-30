@@ -126,7 +126,8 @@ impl Mapper {
         })
     }
 
-    pub fn map(&mut self, radio_header: Radiotap, dot11_header: Dot11Header, people: bool) {
+    pub fn map(&mut self, radio_header: Radiotap, dot11_header: Dot11Header, people: bool) -> Option<Collection> {
+        let mut new_ap = None;
         let info = dot11_header.info.clone();
         let frame_type = dot11_header.frame_control.frame_type;
         let frame_subtype = dot11_header.frame_control.frame_subtype;
@@ -159,13 +160,14 @@ impl Mapper {
             } else if frame_type == FrameType::Management {
                 // Lets use the Beacon frame to get Access Point information
                 if let BodyInformation::Beacon(beacon) = info.clone() {
-                    self.add_access_point(beacon, signal, dot11_header);
+                    new_ap = self.add_access_point(beacon, signal, dot11_header);
                 }
             }
         }
+        new_ap
     }
 
-    fn add_access_point(&mut self, beacon: Beacon, signal: i8, dot11_header: Dot11Header) {
+    fn add_access_point(&mut self, beacon: Beacon, signal: i8, dot11_header: Dot11Header) -> Option<Collection> {
         if !dot11_header.bssid.contains(BROADCAST) && !dot11_header.bssid.contains(UNSPECIFIED) {
             let header = dot11_header.clone();
             if !self.net_map.contains_key(&header.bssid.clone()) {
@@ -177,11 +179,18 @@ impl Mapper {
                 access_point.router_id = header.bssid.clone();
                 access_point.label = self.vendors.lookup(header.bssid.clone());
 
+                // TODO: Check why we get some empty SSIDs
+                if access_point.ssid == "" {
+                    return None; 
+                }
+
                 let node = Node::new(header.bssid.clone(), access_point.label.clone(), 0);
                 access_point.nodes.push(node);
-                self.net_map.insert(header.bssid, access_point);
+                self.net_map.insert(header.bssid, access_point.clone());
+                return Some(access_point);
             }
         }
+        return None;
     }
 
     fn add_to_collection(&mut self, mac: String, bssid: String, signal: i8) {

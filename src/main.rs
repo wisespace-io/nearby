@@ -29,12 +29,12 @@ use bytes::{Buf};
 use std::io::Cursor;
 use clap::{Arg, App};
 use std::time::Instant;
-use console::{style, Term};
+use console::{style, Emoji, Term};
 use linux_device_management::NetworkInterface;
 
 const TIMEOUT: i32 = 10;
-const DEFAULT_EXECUTION_WINDOW: usize = 15;
-const LONG_EXECUTION_WINDOW: usize = 120;
+const DEFAULT_EXECUTION_WINDOW: usize = 5;
+const LONG_EXECUTION_WINDOW: usize = 10;
 
 fn main() -> Result<()> {
     let matches = App::new("Nearby")
@@ -77,10 +77,10 @@ fn main() -> Result<()> {
             };
 
             let people = matches.is_present("people");
-            let mut execution_window = DEFAULT_EXECUTION_WINDOW + wifi.channels.len();
+            let mut execution_window = DEFAULT_EXECUTION_WINDOW * wifi.channels.len();
 
             if people {
-                execution_window = LONG_EXECUTION_WINDOW;
+                execution_window = LONG_EXECUTION_WINDOW * wifi.channels.len();
             }
             // DLT_IEEE802_11_RADIO = 127
             if let Ok(_result) = cap.set_datalink(pcap::Linktype(127)) {
@@ -90,8 +90,8 @@ fn main() -> Result<()> {
 
                 wifi.start_channel_switch();
                 while start.elapsed().as_secs() < (execution_window as u64) {
-                    let elapsed = start.elapsed().as_secs();
-                    term.write_line(&format!("Searching devices ... elapsed time {}", style(elapsed).cyan()))?;
+                    let remaining = (execution_window as u64) - start.elapsed().as_secs();
+                    term.write_line(&format!("{} Searching devices: remaining {} sec ", Emoji("📶", "📡 "), style(remaining).red()))?;
                     term.move_cursor_up(1)?;
                     match cap.next() {
                         Ok(packet) => {
@@ -103,7 +103,10 @@ fn main() -> Result<()> {
                                     buf.advance(tap_data.header.length);
 
                                     let dot11_header = Dot11Header::from_bytes(&buf.bytes())?;
-                                    mapper.map(tap_data, dot11_header, people);
+                                    if let Some(ap) = mapper.map(tap_data, dot11_header, people) {
+                                        term.write_line(&format!("Access point {} signal {} current channel {}", 
+                                                        style(ap.ssid).cyan(), style(ap.signal).cyan(), style(ap.current_channel).cyan()))?;
+                                    }                                
                                 }
                             }
                         }

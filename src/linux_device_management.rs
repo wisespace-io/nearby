@@ -109,7 +109,7 @@ impl NetworkInterface {
                                                           .arg("channel")
                                                           .arg(channels[index].clone())
                                                           .status().unwrap();
-                thread::sleep(Duration::from_millis(1000)); // one second per channel may be too little.
+                thread::sleep(Duration::from_millis(4000)); // 4 seconds per channel
             }
         });
     }
