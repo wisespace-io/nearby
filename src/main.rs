@@ -70,8 +70,8 @@ fn main() -> Result<()> {
             wifi.find_monitor_interfaces()?;
             wifi.find_supported_channels()?;
 
-            let mut cap = pcap::Capture::from_device(&device[..])?;
-            let mut cap = match cap.timeout(TIMEOUT).rfmon(true).open() {
+            let capture = pcap::Capture::from_device(&device[..])?;
+            let mut cap = match capture.timeout(TIMEOUT).rfmon(true).open() {
                 Ok(cap) => cap,
                 Err(_e) => bail!("Can not open device, you need root access"),
             };

@@ -34,7 +34,7 @@ pub fn flag_is_set(data: u8, bit: u8) -> bool {
     }
 }
 
-pub fn create_netjson(mapper: Mapper) -> Result<(String)> {
+pub fn create_netjson(mapper: Mapper) -> Result<String> {
     // Print Access Point information
     let mut net: Vec<Collection> = Vec::new();
     for ap in mapper.net_map.values() {
@@ -51,7 +51,7 @@ pub fn create_netjson(mapper: Mapper) -> Result<(String)> {
     Ok(netjson)
 }
 
-pub fn format_people_json(mapper: Mapper) -> Result<(String)> {
+pub fn format_people_json(mapper: Mapper) -> Result<String> {
     let mut people_vec: Vec<People> = Vec::new();
 
     for person in mapper.people_map.values() {
@@ -71,7 +71,7 @@ pub fn save_netjson(file: &str, content: String) -> Result<()> {
 }
 
 #[allow(dead_code)]
-pub fn geo_location_request(mapper: Mapper) -> Result<(String)> {
+pub fn geo_location_request(mapper: Mapper) -> Result<String> {
     let mut macs: Vec<Macs> = Vec::new();
 
     for collection in mapper.net_map.values() {
@@ -92,7 +92,7 @@ pub fn geo_location_request(mapper: Mapper) -> Result<(String)> {
 }
 
 #[allow(dead_code)]
-fn get_geolocation(payload: String) -> Result<(String)> {
+fn get_geolocation(payload: String) -> Result<String> {
     let client = reqwest::Client::new();
     
     let response = client.post(RADIO_CELLS_API)
@@ -103,7 +103,7 @@ fn get_geolocation(payload: String) -> Result<(String)> {
 }
 
 #[allow(dead_code)]
-fn handler(mut response: Response) -> Result<(String)> {
+fn handler(mut response: Response) -> Result<String> {
     match response.status() {
         StatusCode::OK => {
             let mut body = String::new();

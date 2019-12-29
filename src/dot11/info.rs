@@ -271,7 +271,7 @@ pub fn get_info(input: &[u8]) -> AdditionalInfo {
                 info.country = Country::from_bytes(cursor.bytes());
                 cursor.advance(len);
             },
-            0x32...0x42 => cursor.advance(len), // Can appear before country
+            0x32..=0x42 => cursor.advance(len), // Can appear before country
             _ => {
                 break;
             }

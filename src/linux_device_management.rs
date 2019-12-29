@@ -18,7 +18,7 @@ pub struct NetworkInterface {
 }
 
 impl NetworkInterface {
-    pub fn new<S>(network_interface: S) -> Result<(NetworkInterface)>
+    pub fn new<S>(network_interface: S) -> Result<NetworkInterface>
         where S: Into<String>
     {
         let network_interface_name = network_interface.into();
@@ -57,7 +57,7 @@ impl NetworkInterface {
         Ok(())
     }
 
-    fn is_monitor_mode_device(&self, entry: String) -> Result<(bool)> {
+    fn is_monitor_mode_device(&self, entry: String) -> Result<bool> {
         let mut str_mode = String::new();
         let path = format!("{}/{}/type", NETWORK_INTERFACE_PATH, entry);
         let mut file = File::open(&path)?;
@@ -88,7 +88,7 @@ impl NetworkInterface {
         let lines: Vec<&str> = output.split('\n').collect();
       
         for line in lines {
-            let mut channels: Vec<String> = line.split(" : ").map(|s| s.into()).collect();
+            let channels: Vec<String> = line.split(" : ").map(|s| s.into()).collect();
             if channels[0].contains(" Channel ") {
                 let ch = channels[0].trim().replace("Channel ", "");
                 self.channels.push(ch);
