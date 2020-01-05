@@ -5,8 +5,9 @@ extern crate pcap;
 extern crate console;
 extern crate byteorder;
 extern crate radiotap;
-#[macro_use] 
+#[macro_use]
 extern crate error_chain;
+extern crate crossbeam_channel;
 extern crate clap;
 extern crate reqwest;
 extern crate serde;
@@ -14,6 +15,7 @@ extern crate serde_json;
 extern crate actix;
 extern crate actix_web;
 extern crate env_logger;
+extern crate ctrlc;
 
 mod util;
 mod errors;
@@ -91,7 +93,7 @@ fn main() -> Result<()> {
                 wifi.start_channel_switch();
                 while start.elapsed().as_secs() < (execution_window as u64) {
                     let remaining = (execution_window as u64) - start.elapsed().as_secs();
-                    term.write_line(&format!("{} Searching devices: remaining {} sec ", Emoji("📶", "📡 "), style(remaining).red()))?;
+                    term.write_line(&format!("{} Searching devices: remaining {} sec. Use CTRL-C to stop ", Emoji("📶", "📡 "), style(remaining).red()))?;
                     term.move_cursor_up(1)?;
                     match cap.next() {
                         Ok(packet) => {
@@ -104,8 +106,11 @@ fn main() -> Result<()> {
 
                                     let dot11_header = Dot11Header::from_bytes(&buf.bytes())?;
                                     if let Some(ap) = mapper.map(tap_data, dot11_header, people) {
-                                        term.write_line(&format!("Access point {} signal {} current channel {}", 
-                                                        style(ap.ssid).cyan(), style(ap.signal).cyan(), style(ap.current_channel).cyan()))?;
+                                        term.write_line(&format!("Access point {} signal {} current channel {} {}", 
+                                                        style(ap.ssid).cyan(),
+                                                        style(ap.signal).cyan(),
+                                                        style(ap.current_channel).cyan(),
+                                                        "                      "))?;
                                     }                                
                                 }
                             }
@@ -117,6 +122,12 @@ fn main() -> Result<()> {
                         Err(e) => {
                             bail!("Unexpect error: {}", e.to_string())
                         }
+                    }
+
+                    if !wifi.running() {
+                        println!("");
+                        println!("=>>>>>> Process stopped by user (CTRL-C)");
+                        break;                        
                     }
                 }
 

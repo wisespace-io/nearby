@@ -1,10 +1,13 @@
 use errors::*;
 use std::thread;
+use std::sync::Arc;
 use std::time::Duration;
 use std::io::prelude::*;
 use std::fs::{self, File};
 use std::process::Command;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
+use crossbeam_channel::{bounded, tick, Receiver, select};
 
 const ADAPTER_MONITOR_MODE: i32 = 803; // ARPHRD_IEEE80211_RADIOTAP
 static NETWORK_INTERFACE_PATH: &'static str = "/sys/class/net";
@@ -15,6 +18,7 @@ pub struct NetworkInterface {
     pub path: PathBuf,
     pub channels: Vec<String>,
     wireless: bool,
+    shared: Arc<AtomicBool>
 }
 
 impl NetworkInterface {
@@ -34,6 +38,7 @@ impl NetworkInterface {
             path: network_interface_path,
             channels: Vec::new(),
             wireless: wireless,
+            shared: Arc::new(AtomicBool::new(true))
         })
     }
 
@@ -101,16 +106,39 @@ impl NetworkInterface {
         let name = self.name.clone();
         let channels = self.channels.clone();
         let mut index = 0;
+        let ticks = tick(Duration::from_secs(5)); // switch channel each 5 seconds
 
+        let ctrl_c_events = self.ctrl_channel().unwrap();
         let _handle = thread::spawn(move || {
             loop {
-                index = (index + 1) % channels.len();
-                let _cmd_status = Command::new("iwconfig").arg(name.clone())
-                                                          .arg("channel")
-                                                          .arg(channels[index].clone())
-                                                          .status().unwrap();
-                thread::sleep(Duration::from_millis(4000)); // 4 seconds per channel
+                select! {
+                    recv(ticks) -> _ => {
+                        index = (index + 1) % channels.len();
+                        let _cmd_status = Command::new("iwconfig").arg(name.clone())
+                                                                .arg("channel")
+                                                                .arg(channels[index].clone())
+                                                                .status().unwrap();                        
+                    }
+                    recv(ctrl_c_events) -> _ => {
+                        break;
+                    }
+                }
             }
         });
+    }
+
+    pub fn running(&self) -> bool {
+        return self.shared.load(Ordering::Relaxed);
+    }
+
+    fn ctrl_channel(&self) -> Result<Receiver<()>> {
+        let (sender, receiver) = bounded(100);
+        let shared1 = Arc::clone(&self.shared);
+        ctrlc::set_handler(move || {
+            let _ = sender.send(());
+            shared1.swap(false, Ordering::Relaxed);
+        })?;
+
+        Ok(receiver)
     }
 }
