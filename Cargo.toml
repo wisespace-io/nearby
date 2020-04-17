@@ -25,6 +25,6 @@ env_logger = "0.7"
 actix = "0.7"
 actix-web = "0.7"
 reqwest = "0.9"
-error-chain = "0.12"
 ctrlc = "3.1"
 crossbeam-channel = "0.4"
+error-chain = { version = "0.12", default-features = false }
