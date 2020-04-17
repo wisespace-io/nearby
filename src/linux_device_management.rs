@@ -1,4 +1,4 @@
-use errors::*;
+use crate::errors::*;
 use std::thread;
 use std::sync::Arc;
 use std::time::Duration;

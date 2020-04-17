@@ -1,4 +1,4 @@
-use errors::*;
+use crate::errors::*;
 use std::fs::File;
 use std::io::{BufReader, prelude::*};
 use std::collections::HashMap;

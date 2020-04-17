@@ -1,8 +1,8 @@
 use std::fs::File;
 use std::io::Read;
 use std::io::prelude::*;
-use mapper::*;
-use errors::*;
+use crate::mapper::*;
+use crate::errors::*;
 use reqwest;
 use reqwest::{StatusCode, Response};
 use serde_json::to_string_pretty;

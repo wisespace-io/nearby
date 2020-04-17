@@ -24,15 +24,15 @@ mod server;
 mod mapper;
 mod linux_device_management;
 
-use errors::*;
-use dot11::header::*;
-use mapper::*;
+use crate::errors::*;
+use crate::dot11::header::*;
+use crate::mapper::*;
 use bytes::{Buf};
 use std::io::Cursor;
 use clap::{Arg, App};
 use std::time::Instant;
 use console::{style, Emoji, Term};
-use linux_device_management::NetworkInterface;
+use crate::linux_device_management::NetworkInterface;
 
 const TIMEOUT: i32 = 10;
 const DEFAULT_EXECUTION_WINDOW: usize = 5;

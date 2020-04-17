@@ -1,8 +1,8 @@
-use util::*;
-use errors::*;
+use crate::util::*;
+use crate::errors::*;
 use bytes::{Buf, IntoBuf, Bytes};
 use std::io::{Cursor, self};
-use dot11::info::*;
+use crate::dot11::info::*;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum FrameType {
