@@ -1,21 +1,10 @@
 #[macro_use]
 extern crate serde_derive;
-extern crate bytes;
-extern crate pcap;
-extern crate console;
-extern crate byteorder;
-extern crate radiotap;
+use pcap;
+use radiotap;
+
 #[macro_use]
 extern crate error_chain;
-extern crate crossbeam_channel;
-extern crate clap;
-extern crate reqwest;
-extern crate serde;
-extern crate serde_json;
-extern crate actix;
-extern crate actix_web;
-extern crate env_logger;
-extern crate ctrlc;
 
 mod util;
 mod errors;
