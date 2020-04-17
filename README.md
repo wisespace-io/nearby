@@ -31,6 +31,7 @@ cargo build --release
 ### Nearby Devices
 
 Root access is required to `nearby` be able to set the wireless interface on `Monitor Mode`
+You can list the network interfaces with `ip link show` on Ubuntu.
 
 ```rust
 sudo target/release/nearby -i your_wireless_adapter
