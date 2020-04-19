@@ -24,8 +24,8 @@ use console::{style, Emoji, Term};
 use crate::linux_device_management::NetworkInterface;
 
 const TIMEOUT: i32 = 10;
-const DEFAULT_EXECUTION_WINDOW: usize = 5;
-const LONG_EXECUTION_WINDOW: usize = 10;
+const DEFAULT_EXECUTION_WINDOW: usize = 10;
+const LONG_EXECUTION_WINDOW: usize = 15;
 
 fn main() -> Result<()> {
     let matches = App::new("Nearby")

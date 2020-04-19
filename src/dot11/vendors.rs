@@ -17,7 +17,7 @@ impl VendorsDB {
         for line in buf_reader.lines() {
             let strline = line?;
             let v: Vec<&str> = strline.split('\t').collect();
-            if v[0].contains("base 16") {
+            if v[0].contains("base 16") && v.len() >= 3 {
                 let (vendor_code, _discard) = v[0].split_at(6);
                 let vendor_name = v[2];
                 vendors.insert(vendor_code.to_lowercase(), vendor_name.to_string());
