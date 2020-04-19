@@ -10,7 +10,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use crossbeam_channel::{bounded, tick, Receiver, select};
 
 const ADAPTER_MONITOR_MODE: i32 = 803; // ARPHRD_IEEE80211_RADIOTAP
-static NETWORK_INTERFACE_PATH: &'static str = "/sys/class/net";
+static NETWORK_INTERFACE_PATH: &str = "/sys/class/net";
 
 #[derive(Clone, Debug)]
 pub struct NetworkInterface {
@@ -18,15 +18,17 @@ pub struct NetworkInterface {
     pub path: PathBuf,
     pub channels: Vec<String>,
     wireless: bool,
-    shared: Arc<AtomicBool>
+    shared: Arc<AtomicBool>,
 }
 
 impl NetworkInterface {
     pub fn new<S>(network_interface: S) -> Result<NetworkInterface>
-        where S: Into<String>
+    where
+        S: Into<String>,
     {
         let network_interface_name = network_interface.into();
-        let network_interface_path = Path::new(NETWORK_INTERFACE_PATH).join(network_interface_name.clone());
+        let network_interface_path =
+            Path::new(NETWORK_INTERFACE_PATH).join(network_interface_name.clone());
         if !network_interface_path.exists() {
             bail!("Network Interface not found")
         }
@@ -37,8 +39,8 @@ impl NetworkInterface {
             name: network_interface_name,
             path: network_interface_path,
             channels: Vec::new(),
-            wireless: wireless,
-            shared: Arc::new(AtomicBool::new(true))
+            wireless,
+            shared: Arc::new(AtomicBool::new(true)),
         })
     }
 
@@ -51,13 +53,23 @@ impl NetworkInterface {
         self.set_interface_mode("managed")?;
         Ok(())
     }
-    
+
     fn set_interface_mode(&self, mode: &str) -> Result<()> {
-        let _down_status = Command::new("ifconfig").arg(self.name.clone()).arg("down").status()?;
+        let _down_status = Command::new("ifconfig")
+            .arg(self.name.clone())
+            .arg("down")
+            .status()?;
 
-        let _iwconfig = Command::new("iwconfig").arg(self.name.clone()).arg("mode").arg(mode).status()?;
+        let _iwconfig = Command::new("iwconfig")
+            .arg(self.name.clone())
+            .arg("mode")
+            .arg(mode)
+            .status()?;
 
-        let _up_status = Command::new("ifconfig").arg(self.name.clone()).arg("up").status()?;
+        let _up_status = Command::new("ifconfig")
+            .arg(self.name.clone())
+            .arg("up")
+            .status()?;
 
         Ok(())
     }
@@ -88,10 +100,13 @@ impl NetworkInterface {
     }
 
     pub fn find_supported_channels(&mut self) -> Result<()> {
-        let iwlist = Command::new("iwlist").arg(self.name.clone()).arg("freq").output()?;
+        let iwlist = Command::new("iwlist")
+            .arg(self.name.clone())
+            .arg("freq")
+            .output()?;
         let output = String::from_utf8_lossy(&iwlist.stdout);
         let lines: Vec<&str> = output.split('\n').collect();
-      
+
         for line in lines {
             let channels: Vec<String> = line.split(" : ").map(|s| s.into()).collect();
             if channels[0].contains(" Channel ") {
@@ -109,26 +124,24 @@ impl NetworkInterface {
         let ticks = tick(Duration::from_secs(5)); // switch channel each 5 seconds
 
         let ctrl_c_events = self.ctrl_channel().unwrap();
-        let _handle = thread::spawn(move || {
-            loop {
-                select! {
-                    recv(ticks) -> _ => {
-                        index = (index + 1) % channels.len();
-                        let _cmd_status = Command::new("iwconfig").arg(name.clone())
-                                                                .arg("channel")
-                                                                .arg(channels[index].clone())
-                                                                .status().unwrap();                        
-                    }
-                    recv(ctrl_c_events) -> _ => {
-                        break;
-                    }
+        let _handle = thread::spawn(move || loop {
+            select! {
+                recv(ticks) -> _ => {
+                    index = (index + 1) % channels.len();
+                    let _cmd_status = Command::new("iwconfig").arg(name.clone())
+                                                            .arg("channel")
+                                                            .arg(channels[index].clone())
+                                                            .status().unwrap();
+                }
+                recv(ctrl_c_events) -> _ => {
+                    break;
                 }
             }
         });
     }
 
     pub fn running(&self) -> bool {
-        return self.shared.load(Ordering::Relaxed);
+        self.shared.load(Ordering::Relaxed)
     }
 
     fn ctrl_channel(&self) -> Result<Receiver<()>> {

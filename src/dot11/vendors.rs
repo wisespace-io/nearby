@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
 pub struct VendorsDB {
-    db: HashMap<String, String>
+    db: HashMap<String, String>,
 }
 
 impl VendorsDB {
@@ -24,9 +24,7 @@ impl VendorsDB {
             }
         }
 
-        Ok(VendorsDB {
-            db: vendors
-        })
+        Ok(VendorsDB { db: vendors })
     }
 
     pub fn lookup(&self, mac: String) -> String {
@@ -35,7 +33,7 @@ impl VendorsDB {
 
         match self.db.get(&key) {
             Some(key) => key.clone(),
-            None => "".into()
+            None => "".into(),
         }
     }
 }

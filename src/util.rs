@@ -8,19 +8,19 @@ use reqwest::{StatusCode, Response};
 use serde_json::to_string_pretty;
 
 // Enable when service stable again, or add another provider
-static RADIO_CELLS_API : &'static str = "https://radiocells.org/backend/geolocate";
+static RADIO_CELLS_API: &str = "https://radiocells.org/backend/geolocate";
 
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct WifiAccessPoints {
-    wifi_access_points: Vec<Macs>
+    wifi_access_points: Vec<Macs>,
 }
 
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Macs {
     mac_address: String,
-    signal_strength: i8
+    signal_strength: i8,
 }
 
 #[inline]
@@ -43,7 +43,7 @@ pub fn create_netjson(mapper: Mapper) -> Result<String> {
 
     let net_col = NetworkCollection {
         id: "NetworkCollection".into(),
-        collection: net
+        collection: net,
     };
 
     let netjson = to_string_pretty(&net_col)?;
@@ -75,14 +75,14 @@ pub fn geo_location_request(mapper: Mapper) -> Result<String> {
     let mut macs: Vec<Macs> = Vec::new();
 
     for collection in mapper.net_map.values() {
-        macs.push(Macs{
+        macs.push(Macs {
             mac_address: collection.router_id.clone(),
-            signal_strength: collection.signal
+            signal_strength: collection.signal,
         });
     }
 
     let ap = WifiAccessPoints {
-        wifi_access_points: macs
+        wifi_access_points: macs,
     };
 
     let json = to_string_pretty(&ap)?;
@@ -94,12 +94,10 @@ pub fn geo_location_request(mapper: Mapper) -> Result<String> {
 #[allow(dead_code)]
 fn get_geolocation(payload: String) -> Result<String> {
     let client = reqwest::Client::new();
-    
-    let response = client.post(RADIO_CELLS_API)
-        .body(payload)
-        .send()?;
 
-    handler(response) 
+    let response = client.post(RADIO_CELLS_API).body(payload).send()?;
+
+    handler(response)
 }
 
 #[allow(dead_code)]
@@ -108,19 +106,19 @@ fn handler(mut response: Response) -> Result<String> {
         StatusCode::OK => {
             let mut body = String::new();
             response.read_to_string(&mut body)?;
-            return Ok(body);
-        },
+            Ok(body)
+        }
         StatusCode::INTERNAL_SERVER_ERROR => {
             bail!("Internal Server Error");
         }
         StatusCode::SERVICE_UNAVAILABLE => {
             bail!("Service Unavailable");
-        }           
+        }
         StatusCode::BAD_REQUEST => {
             bail!(format!("Bad Request: {:?}", response));
-        }                        
+        }
         s => {
             bail!(format!("Received response: {:?}", s));
         }
-    };
+    }
 }

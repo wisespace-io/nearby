@@ -9,7 +9,7 @@ pub enum FrameType {
     Management,
     Control,
     Data,
-    Unknown
+    Unknown,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -38,7 +38,7 @@ pub enum FrameSubType {
     QoSCfAckCfPull,
     QoSNullData,
     Reserved,
-    UnHandled
+    UnHandled,
 }
 
 #[derive(Clone, Debug)]
@@ -49,7 +49,7 @@ pub struct Dot11Header {
     pub src: String,
     pub bssid: String,
     pub seq_ctl: [u8; 2],
-    pub info: BodyInformation
+    pub info: BodyInformation,
 }
 
 impl Dot11Header {
@@ -77,16 +77,16 @@ impl Dot11Header {
         let mut dst2 = vec![];
         io::copy(&mut reader, &mut dst2)?;
 
-        let body_information = Dot11Header::parse_body(frame_control, &dst2[..]);        
+        let body_information = Dot11Header::parse_body(frame_control, &dst2[..]);
 
         let header = Dot11Header {
-            frame_control: frame_control,
-            duration: duration,
-            dst: dst,
-            src: src,
-            bssid: bssid,
-            seq_ctl: seq_ctl,
-            info: body_information
+            frame_control,
+            duration,
+            dst,
+            src,
+            bssid,
+            seq_ctl,
+            info: body_information,
         };
         Ok(header)
     }
@@ -115,27 +115,27 @@ impl Dot11Header {
             bssid.push_str(&addresses.addr3.addr);
         }
 
-        return (dst, src, bssid)
+        (dst, src, bssid)
     }
 
     fn parse_body(frame_control: FrameControl, input: &[u8]) -> BodyInformation {
         match frame_control.frame_type {
-           FrameType::Management => {
-               if frame_control.frame_subtype == FrameSubType::Beacon {
-                   return BodyInformation::Beacon(Beacon::from_bytes(input));
-               } else if frame_control.frame_subtype == FrameSubType::ProbeReq {
-                   return BodyInformation::ProbeRequest(ProbeRequest::from_bytes(input));
-               } else if frame_control.frame_subtype == FrameSubType::ProbeResp {
-                   return BodyInformation::ProbeResponse(ProbeResponse::from_bytes(input));
-               } else if frame_control.frame_subtype == FrameSubType::AssoReq {
-                   return BodyInformation::AssociationRequest(AssociationRequest::from_bytes(input));
-               } else if frame_control.frame_subtype == FrameSubType::AssoResp {
-                   return BodyInformation::AssociationResponse(AssociationResponse::from_bytes(input));
-               } else {
-                   return BodyInformation::UnHandled(true);
-               }
-           },
-           _ => return BodyInformation::UnHandled(true)
+            FrameType::Management => {
+                if frame_control.frame_subtype == FrameSubType::Beacon {
+                    BodyInformation::Beacon(Beacon::from_bytes(input))
+                } else if frame_control.frame_subtype == FrameSubType::ProbeReq {
+                    BodyInformation::ProbeRequest(ProbeRequest::from_bytes(input))
+                } else if frame_control.frame_subtype == FrameSubType::ProbeResp {
+                    BodyInformation::ProbeResponse(ProbeResponse::from_bytes(input))
+                } else if frame_control.frame_subtype == FrameSubType::AssoReq {
+                    BodyInformation::AssociationRequest(AssociationRequest::from_bytes(input))
+                } else if frame_control.frame_subtype == FrameSubType::AssoResp {
+                    BodyInformation::AssociationResponse(AssociationResponse::from_bytes(input))
+                } else {
+                    BodyInformation::UnHandled(true)
+                }
+            }
+            _ => BodyInformation::UnHandled(true),
         }
     }
 }
@@ -165,7 +165,7 @@ impl FrameControl {
         }
 
         let frame_type = FrameControl::frame_type(version_type_subtype);
-        
+
         let frame_subtype = match frame_type {
             FrameType::Management => FrameControl::frame_subtype(version_type_subtype),
             FrameType::Data => FrameControl::data_frame_subtype(version_type_subtype),
@@ -174,16 +174,16 @@ impl FrameControl {
         };
 
         let fc = FrameControl {
-            frame_type: frame_type,
-            frame_subtype: frame_subtype,
-            to_ds: flag_is_set(flags.into(), 0),
-            from_ds: flag_is_set(flags.into(), 1),
-            more_flag: flag_is_set(flags.into(), 2),
-            retry: flag_is_set(flags.into(), 3),
-            pwr_mgmt: flag_is_set(flags.into(), 4),
-            more_data: flag_is_set(flags.into(), 5),
-            wep: flag_is_set(flags.into(), 6),
-            order: flag_is_set(flags.into(), 7),
+            frame_type,
+            frame_subtype,
+            to_ds: flag_is_set(flags, 0),
+            from_ds: flag_is_set(flags, 1),
+            more_flag: flag_is_set(flags, 2),
+            retry: flag_is_set(flags, 3),
+            pwr_mgmt: flag_is_set(flags, 4),
+            more_data: flag_is_set(flags, 5),
+            wep: flag_is_set(flags, 6),
+            order: flag_is_set(flags, 7),
         };
 
         Ok(fc)
@@ -198,7 +198,7 @@ impl FrameControl {
             0 => FrameType::Management,
             1 => FrameType::Control,
             2 => FrameType::Data,
-            _ => FrameType::Unknown
+            _ => FrameType::Unknown,
         }
     }
 
@@ -236,7 +236,7 @@ impl FrameControl {
             13 => FrameSubType::Reserved,
             _ => FrameSubType::UnHandled,
         }
-    }    
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -244,7 +244,7 @@ pub struct FrameAddresses {
     pub addr1: MACField,
     pub addr2: MACField,
     pub addr3: MACField,
-    pub addr4: MACField
+    pub addr4: MACField,
 }
 
 impl FrameAddresses {
@@ -272,27 +272,28 @@ impl FrameAddresses {
         let mut mac_addr4 = [0; 6];
         reader.read(&mut mac_addr4)?;
         let addr4 = MACField::from_slice(&mac_addr4);
-        
+
         Ok(FrameAddresses {
             addr1,
             addr2,
             addr3,
-            addr4
+            addr4,
         })
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct MACField {
-    pub addr: String
+    pub addr: String,
 }
 
 impl MACField {
     pub fn from_slice(s: &[u8]) -> MACField {
-        let addr = format!("{:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}", s[0], s[1], s[2], s[3], s[4], s[5]);
- 
-        MACField {
-            addr
-        }
+        let addr = format!(
+            "{:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}",
+            s[0], s[1], s[2], s[3], s[4], s[5]
+        );
+
+        MACField { addr }
     }
 }

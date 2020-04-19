@@ -17,5 +17,5 @@ error_chain! {
         ReqError(reqwest::Error);
         ParseIntError(parseIntError);
         CtrlcError(ctrlcError);
-    }   
+    }
 }

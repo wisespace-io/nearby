@@ -8,12 +8,13 @@ pub enum BodyInformation {
     ProbeResponse(ProbeResponse),
     AssociationRequest(AssociationRequest),
     AssociationResponse(AssociationResponse),
-    UnHandled(bool)
+    UnHandled(bool),
 }
 
 pub trait Info {
     fn from_bytes(input: &[u8]) -> Self
-        where Self: Sized;
+    where
+        Self: Sized;
 }
 
 #[derive(Clone, Debug)]
@@ -24,7 +25,7 @@ pub struct Beacon {
     pub ssid: SSID,
     pub supported_rates: Vec<f32>,
     pub current_channel: u8,
-    pub country: Country
+    pub country: Country,
 }
 
 impl Info for Beacon {
@@ -42,13 +43,13 @@ impl Info for Beacon {
         let info = get_info(cursor.bytes());
 
         Beacon {
-           timestamp: timestamp,
-           interval: interval,
-           cap_info: cap_info,
-           ssid: ssid,
-           supported_rates: supported_rates,
-           current_channel: info.current_channel,
-           country: info.country
+            timestamp,
+            interval,
+            cap_info,
+            ssid,
+            supported_rates,
+            current_channel: info.current_channel,
+            country: info.country,
         }
     }
 }
@@ -56,7 +57,7 @@ impl Info for Beacon {
 #[derive(Clone, Debug)]
 pub struct ProbeRequest {
     pub ssid: SSID,
-    pub supported_rates: Vec<f32>
+    pub supported_rates: Vec<f32>,
 }
 
 impl Info for ProbeRequest {
@@ -67,8 +68,8 @@ impl Info for ProbeRequest {
         cursor.advance(ssid.ssid_len + 2);
 
         ProbeRequest {
-           ssid: ssid,
-           supported_rates: supported_rates(cursor.bytes())
+            ssid,
+            supported_rates: supported_rates(cursor.bytes()),
         }
     }
 }
@@ -81,7 +82,7 @@ pub struct ProbeResponse {
     pub ssid: SSID,
     pub supported_rates: Vec<f32>,
     pub current_channel: u8,
-    pub country: Country
+    pub country: Country,
 }
 
 impl Info for ProbeResponse {
@@ -99,13 +100,13 @@ impl Info for ProbeResponse {
         let info = get_info(cursor.bytes());
 
         ProbeResponse {
-           timestamp: timestamp,
-           interval: interval,
-           cap_info: cap_info,
-           ssid: ssid,
-           supported_rates: supported_rates,
-           current_channel: info.current_channel,
-           country: info.country
+            timestamp,
+            interval,
+            cap_info,
+            ssid,
+            supported_rates,
+            current_channel: info.current_channel,
+            country: info.country,
         }
     }
 }
@@ -115,7 +116,7 @@ pub struct AssociationRequest {
     pub cap_info: u16,
     pub interval: u16,
     pub ssid: SSID,
-    pub supported_rates: Vec<f32>
+    pub supported_rates: Vec<f32>,
 }
 
 impl Info for AssociationRequest {
@@ -128,10 +129,10 @@ impl Info for AssociationRequest {
         cursor.advance(ssid.ssid_len + 2);
 
         AssociationRequest {
-           cap_info: cap_info,
-           interval: interval,
-           ssid: ssid,
-           supported_rates: supported_rates(cursor.bytes())
+            cap_info,
+            interval,
+            ssid,
+            supported_rates: supported_rates(cursor.bytes()),
         }
     }
 }
@@ -141,7 +142,7 @@ pub struct AssociationResponse {
     pub cap_info: u16,
     pub status_code: u16,
     pub association_id: u16,
-    pub supported_rates: Vec<f32>
+    pub supported_rates: Vec<f32>,
 }
 
 impl Info for AssociationResponse {
@@ -153,10 +154,10 @@ impl Info for AssociationResponse {
         let association_id = cursor.get_u16_le();
 
         AssociationResponse {
-           cap_info: cap_info,
-           status_code: status_code,
-           association_id: association_id,
-           supported_rates: supported_rates(cursor.bytes())
+            cap_info,
+            status_code,
+            association_id,
+            supported_rates: supported_rates(cursor.bytes()),
         }
     }
 }
@@ -175,12 +176,12 @@ impl Info for SSID {
         let element_id = cursor.get_u8();
         let ssid_len = cursor.get_u8() as usize;
         let mut buf = Bytes::from(cursor.bytes());
-        let ssid =  buf.split_to(ssid_len);
+        let ssid = buf.split_to(ssid_len);
 
         SSID {
-            element_id: element_id,
-            ssid_len: ssid_len,
-            value: String::from_utf8(ssid.to_vec()).unwrap_or("".to_string())
+            element_id,
+            ssid_len,
+            value: String::from_utf8(ssid.to_vec()).unwrap_or_else(|_| "".to_string()),
         }
     }
 }
@@ -194,9 +195,10 @@ impl Info for Country {
     fn from_bytes(input: &[u8]) -> Country {
         let mut buf = Bytes::from(input);
         let country_code = buf.split_to(3); // Country code has 3 bytes
-        // We should include the supported channels
+                                            // We should include the supported channels
         Country {
-            country_code: String::from_utf8(country_code.to_vec()).unwrap_or("".to_string())
+            country_code: String::from_utf8(country_code.to_vec())
+                .unwrap_or_else(|_| "".to_string()),
         }
     }
 }
@@ -204,16 +206,18 @@ impl Info for Country {
 #[derive(Clone, Debug, Default)]
 pub struct AdditionalInfo {
     country: Country,
-    current_channel: u8 
+    current_channel: u8,
 }
 
 impl AdditionalInfo {
     pub fn new() -> AdditionalInfo {
-        let country = Country { ..Default::default() };
+        let country = Country {
+            ..Default::default()
+        };
 
         AdditionalInfo {
-            country: country,
-            current_channel: 0
+            country,
+            current_channel: 0,
         }
     }
 }
@@ -253,7 +257,7 @@ pub fn supported_rates(input: &[u8]) -> Vec<f32> {
 pub fn get_info(input: &[u8]) -> AdditionalInfo {
     let mut cursor = Cursor::new(input);
     let mut info = AdditionalInfo::new();
-    
+
     loop {
         let element_id = cursor.get_u8();
         let len = cursor.get_u8() as usize;
@@ -261,16 +265,17 @@ pub fn get_info(input: &[u8]) -> AdditionalInfo {
         // Skipping some fields
         match element_id {
             0x02 => cursor.advance(len), // FH Parameter Set
-            0x03 => { // DS Parameter Set
+            0x03 => {
+                // DS Parameter Set
                 info.current_channel = cursor.get_u8();
-            },
+            }
             0x04 => cursor.advance(len), // CF Parameter Set
             0x05 => cursor.advance(len), // TIM
             0x06 => cursor.advance(len), // IBSS
             0x07 => {
                 info.country = Country::from_bytes(cursor.bytes());
                 cursor.advance(len);
-            },
+            }
             0x32..=0x42 => cursor.advance(len), // Can appear before country
             _ => {
                 break;
