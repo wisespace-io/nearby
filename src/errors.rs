@@ -1,5 +1,4 @@
 use serde_json;
-use reqwest;
 use ctrlc::Error as ctrlcError;
 use pcap::Error as pcapError;
 use std::io::Error as ioError;
@@ -14,7 +13,6 @@ error_chain! {
         IoError(ioError);
         PacpError(pcapError);
         Json(serde_json::Error);
-        ReqError(reqwest::Error);
         ParseIntError(parseIntError);
         CtrlcError(ctrlcError);
     }

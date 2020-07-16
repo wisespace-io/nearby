@@ -68,3 +68,7 @@ There are many USB Wifi adapters that support monitor mode, i.e:
 - Alfa AWUS036NHA
 - Alfa AWUS036NEH
 - TP-Link TL-WN722N (ONLY Version 1)
+
+## Disclaimer
+
+It is the end user's responsibility to obey all applicable local, state and federal laws. Developers assume no liability and are not responsible for any misuse or damage caused by this program.

@@ -4,6 +4,7 @@ use crate::dot11::header::*;
 use crate::dot11::info::*;
 use radiotap::Radiotap;
 use std::collections::HashMap;
+use serde::{Serialize, Deserialize};
 
 const FREE_SPACE_PATH_LOSS: f32 = 27.55;
 static PROTOCOL: &str = "802.11";
