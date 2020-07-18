@@ -14,9 +14,10 @@ Scans nearby wifi networks and the devices connected to each network.
 - [x] Map nearby devices ([Netjson for visualization](https://github.com/netjson/netjsongraph.js))
 - [x] Count the number of people around you
 - [x] Stop Scanning with CTRL-C and print all collected results
+- [ ] Monitor suspicious wireless network activities
+- [ ] GeoLocation (Monitor usage of less common SSIDs)
 - [ ] Watch specific Mac Address (Send alert by email)
 - [ ] BLE Indoor Positioning
-- [ ] GeoLocation
 
 ## Build
 
